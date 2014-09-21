@@ -7,4 +7,6 @@ namespace Kemist\Cache;
  *
  * @author Kemist
  */
-class Exception extends \Exception{}
+class Exception extends \Exception {
+  
+}

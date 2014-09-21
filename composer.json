@@ -1,20 +1,20 @@
 {
-    "name": "kemist/cache",
-    "description": "A simple caching library",
-    "keywords": ["cache","caching"],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Kemist",
-            "email": "kemist1980@gmail.com"
-        }
-    ],
-    "require": {
-      "php": ">=5.3.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "Kemist\\": "src/"
-        }
+  "name": "kemist/cache",
+  "description": "A simple caching library",
+  "keywords": ["cache", "caching"],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Kemist",
+      "email": "kemist1980@gmail.com"
     }
+  ],
+  "require": {
+    "php": ">=5.3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Kemist\\": "src/"
+    }
+  }
 } 
