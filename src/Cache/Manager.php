@@ -76,7 +76,7 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist('_system.info')) {
-      $info = $this->get('_system.info', true, self::STORE_METHOD_JSON);
+      $info = $this->get('_system.info');
       $this->_info = (is_array($info) ? $info : array());
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expire']) || $data['expire'] == 0) {
