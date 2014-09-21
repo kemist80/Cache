@@ -73,9 +73,7 @@ class Manager {
 
     // Initialising in progress 
     $this->_initialised = 0;
-    if (!$this->_storage->init() && $this->isEnabled()) {
-      return false;
-    }
+    $this->_storage->init();
 
     if ($this->exist('_system.info')) {
       $info = $this->get('_system.info', true, self::STORE_METHOD_JSON);
@@ -251,16 +249,16 @@ class Manager {
    * Retrieves the content of $name cache
    * 	 
    * @param string $name cache name
-   * @param bool $compressed Compressed storage
-   * @param int $store_method Storing method (serialize|json)	
    * 	 
    * @return mixed
    */
-  public function get($name, $compressed = false, $store_method = self::STORE_METHOD_SERIALIZE) {
+  public function get($name) {
     if (!$this->isEnabled() || ($this->init() && $name != '_system.info' && !isset($this->_info[$name]))) {
       return false;
     }
 
+    $compressed=($name == '_system.info' ? true : $this->_info[$name]['compressed']);
+    $store_method=($name == '_system.info' ? self::STORE_METHOD_JSON : $this->_info[$name]['store_method']);
     $secret = $this->_encryptKey($name);
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
@@ -283,26 +281,22 @@ class Manager {
    * Retrieves the content of $name cache
    * 	 
    * @param string $name cache name
-   * @param bool $compressed Compressed storage
-   * @param int $store_method Storing method (serialize|json)	
    * 	 
    * @return mixed
    */
-  public function retrieve($name, $compressed = false, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->get($name, $compressed, $store_method);
+  public function retrieve($name) {
+    return $this->get($name);
   }
 
   /**
    * Retrieves the content of $name cache
    * 	 
    * @param string $name cache name
-   * @param bool $compressed Compressed storage
-   * @param int $store_method Storing method (serialize|json)	
    * 	 
    * @return mixed
    */
-  public function load($name, $compressed = false, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->get($name, $compressed, $store_method);
+  public function load($name) {
+    return $this->get($name);
   }
 
   /**
@@ -311,6 +305,9 @@ class Manager {
    * @return array
    */
   public function info($get_fields = false) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
     $this->init();
     return $this->_storage->info($get_fields);
   }
