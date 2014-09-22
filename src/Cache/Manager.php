@@ -52,10 +52,12 @@ class Manager {
 
   const STORE_METHOD_SERIALIZE = 1;
   const STORE_METHOD_JSON = 2;
-
+  
   /**
-   * Constructor
-   *
+   * Constructor 
+   * 
+   * @param StorageInterface $storage
+   * @param array $options
    */
   public function __construct(StorageInterface $storage, array $options = array()) {
     $this->_storage = $storage;
@@ -106,6 +108,9 @@ class Manager {
 
   /**
    * Check if Cache is enabled
+   * 
+   * @param bool $enabled
+   * 
    * @return bool
    */
   public function setEnabled($enabled) {
@@ -278,7 +283,7 @@ class Manager {
   }
 
   /**
-   * Retrieves the content of $name cache
+   * Alias for retrieving the content of $name cache
    * 	 
    * @param string $name cache name
    * 	 
@@ -289,7 +294,7 @@ class Manager {
   }
 
   /**
-   * Retrieves the content of $name cache
+   * Alias for retrieving the content of $name cache
    * 	 
    * @param string $name cache name
    * 	 
@@ -301,6 +306,8 @@ class Manager {
 
   /**
    * Retrieves information of Cache state
+   * 
+   * @param bool $get_fields
    * 	 
    * @return array
    */
@@ -313,7 +320,7 @@ class Manager {
   }
 
   /**
-   * Encodes variable by the specified method
+   * Encodes variable with the specified method
    * 
    * @param mixed $var Variable
    * @param int $store_method serialize|json	 	 	 
@@ -333,7 +340,7 @@ class Manager {
   }
 
   /**
-   * Decodes variable by the specified method
+   * Decodes variable with the specified method
    * 
    * @param mixed $var Variable
    * @param int $store_method serialize|json	 	 	 

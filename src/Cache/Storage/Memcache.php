@@ -49,7 +49,8 @@ class Memcache implements StorageInterface {
 
   /**
    * Constructor
-   *
+   * 
+   * @param array $options
    */
   public function __construct(array $options = array()) {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
@@ -153,7 +154,9 @@ class Memcache implements StorageInterface {
 
   /**
    * Retrieves information of Cache state
-   * 	 
+   * 
+   * @param bool $get_fields
+   *  
    * @return array
    */
   public function info($get_fields = false) {
@@ -172,10 +175,14 @@ class Memcache implements StorageInterface {
     return $ret;
   }
 
+  /**
+   * Destructor
+   * 
+   * @return type
+   */
   public function __destruct() {
     return is_object($this->_memcache) ? $this->_memcache->close() : null;
   }
 
 }
 
-?>

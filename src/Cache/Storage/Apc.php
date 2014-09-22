@@ -31,7 +31,8 @@ class Apc implements StorageInterface {
 
   /**
    * Constructor
-   *
+   * 
+   * @param array $options
    */
   public function __construct(array $options = array()) {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
@@ -101,6 +102,7 @@ class Apc implements StorageInterface {
    * Retrieves the content of $name cache
    * 	 
    * @param string $name cache name
+   * @param bool $compressed
    *
    * @return mixed
    */
@@ -119,6 +121,8 @@ class Apc implements StorageInterface {
 
   /**
    * Retrieves information of Cache state
+   * 
+   * @param bool $get_fields
    * 	 
    * @return array
    */
@@ -139,4 +143,3 @@ class Apc implements StorageInterface {
 
 }
 
-?>

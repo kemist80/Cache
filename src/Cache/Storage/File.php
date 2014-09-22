@@ -47,7 +47,8 @@ class File implements StorageInterface {
 
   /**
    * Constructor
-   *
+   * 
+   * @param array $options
    */
   public function __construct(array $options = array()) {
     if (!isset($options['cache_dir'])) {
@@ -218,6 +219,8 @@ class File implements StorageInterface {
 
   /**
    * Retrieves information of Cache state
+   * 
+   * @param bool $get_fields
    * 	 
    * @return array
    */
@@ -256,4 +259,3 @@ class File implements StorageInterface {
 
 }
 
-?>
