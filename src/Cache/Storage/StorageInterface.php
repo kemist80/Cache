@@ -15,9 +15,9 @@ interface StorageInterface {
 
   public function clear($name = '');
 
-  public function put($name, $val, $encrypt = false);
+  public function put($name, $val, $compressed = false);
 
-  public function get($name, $encrypt = false);
+  public function get($name, $compressed = false);
 
   public function info($get_fields = false);
 

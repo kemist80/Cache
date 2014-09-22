@@ -89,7 +89,7 @@ class Apc implements StorageInterface {
    *
    * @return bool
    */
-  public function put($name, $val, $encrypt = false) {
+  public function put($name, $val, $compressed = false) {
     $ret = apc_store($this->_prefix . $name, $val);
     if ($ret && !in_array($name, $this->_fields)) {
       $this->_fields[] = $name;
@@ -104,7 +104,7 @@ class Apc implements StorageInterface {
    *
    * @return mixed
    */
-  public function get($name, $encrypt = false) {
+  public function get($name, $compressed = false) {
     $ret = apc_fetch($this->_prefix . $name);
 
     if ($ret !== false) {
