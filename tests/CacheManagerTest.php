@@ -5,7 +5,7 @@ use Kemist\Cache\Manager;
 class CacheManagerTest extends \PHPUnit_Framework_TestCase {
 
   protected function _getStorage() {
-    $storage = $this->getMockBuilder('Kemist\Cache\Storage\StorageInterface')->getMock();
+    $storage = $this->getMock('Kemist\Cache\Storage\StorageInterface');
     $storage->expects($this->any())
             ->method('init')
             ->will($this->returnValue(true))

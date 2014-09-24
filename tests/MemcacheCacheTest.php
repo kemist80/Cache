@@ -5,7 +5,7 @@ use Kemist\Cache\Storage\Memcache;
 class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
 
   protected function _getMemCache() {
-    $memcache = $this->getMockBuilder('\Memcache')->getMock();
+    $memcache = $this->getMock('\Memcache');
     $memcache->expects($this->any())
             ->method('connect')
             ->will($this->returnValue(true))

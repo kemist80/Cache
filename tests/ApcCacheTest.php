@@ -5,7 +5,7 @@ use Kemist\Cache\Storage\Apc;
 class ApcCacheTest extends \PHPUnit_Framework_TestCase {
 
   protected function _getApc() {
-    $apc = $this->getMockBuilder('Kemist\Cache\Storage\ApcObject')->getMock();
+    $apc = $this->getMock('Kemist\Cache\Storage\ApcObject');
     $apc->expects($this->any())
             ->method('put')
             ->will($this->returnValue(true))
