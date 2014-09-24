@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.0
+ * @version 1.0.1
  */
 class File implements StorageInterface {
 
@@ -121,12 +121,9 @@ class File implements StorageInterface {
         closedir($dir);
         return false;
       }
-    } else {
-
-      if (file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension)) {
-        unlink($this->_cache_dir . '.' . $name . '.' . $this->_extension);
-        return true;
-      }
+    } elseif (file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension)) {
+      unlink($this->_cache_dir . '.' . $name . '.' . $this->_extension);
+      return true;
     }
 
     return false;
@@ -149,11 +146,8 @@ class File implements StorageInterface {
         $success = flock($f, LOCK_EX);
       }
       if ($success) {
-        if ($compressed) {
-          $ret = fputs($f, gzcompress(($val)));
-        } else {
-          $ret = fputs($f, ($val));
-        }
+        $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));
+
         if ($ret && !in_array($name, $this->_fields)) {
           $this->_fields[] = $name;
         }
@@ -201,18 +195,14 @@ class File implements StorageInterface {
       }
       fclose($f);
       $this->_hits++;
-      if ($compressed) {
-        $ret = (gzuncompress($temp));
-      } else {
-        $ret = ($temp);
-      }
-    }
+      $ret = ($compressed ? gzuncompress($temp) : $temp);
 
-    if ($ret != false) {
       if (!in_array($name, $this->_fields)) {
         $this->_fields[] = $name;
       }
     }
+
+
 
     return $ret;
   }
@@ -258,4 +248,3 @@ class File implements StorageInterface {
   }
 
 }
-

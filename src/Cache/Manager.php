@@ -8,7 +8,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.0
+ * @version 1.0.1
  */
 class Manager {
 
@@ -97,7 +97,15 @@ class Manager {
     $this->_initialised = 1;
     return true;
   }
-
+  
+  /**
+   * Gets Cache info
+   * @return array
+   */
+  public function getInfo(){
+    return $this->_info;
+  }
+  
   /**
    * Check if Cache is enabled
    * @return bool
@@ -392,7 +400,7 @@ class Manager {
     if (!$this->isEnabled() || $this->_initialised < 1) {
       return false;
     }
-    $this->put('_system.info', $this->_info, true, 0, self::STORE_METHOD_JSON);
+    return $this->put('_system.info', $this->_info, true, 0, self::STORE_METHOD_JSON);
   }
 
   /**
@@ -480,7 +488,7 @@ class Manager {
    * @return array
    */
   public function getReadKeys() {
-    return array_keys($this->_read_keys);
+    return $this->_read_keys;
   }
 
   /**

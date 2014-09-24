@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.0
+ * @version 1.0.1
  */
 class Apc implements StorageInterface {
 
@@ -28,14 +28,21 @@ class Apc implements StorageInterface {
    * @var string 
    */
   protected $_prefix = '';
+  
+  /**
+   * APC Object
+   * @var ApcObject 
+   */
+  protected $_apc;
 
   /**
    * Constructor
    * 
    * @param array $options
    */
-  public function __construct(array $options = array()) {
+  public function __construct(ApcObject $apc, array $options = array()) {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
+    $this->_apc=$apc;
   }
 
   /**
@@ -46,9 +53,6 @@ class Apc implements StorageInterface {
    * @throws \Kemist\Cache\Exception
    */
   public function init() {
-    if (!extension_loaded('apc')) {
-      throw new \Kemist\Cache\Exception("APC extension not loaded!");
-    }
     return true;
   }
 
@@ -61,7 +65,7 @@ class Apc implements StorageInterface {
    * @return bool
    */
   public function exist($name, $max_age = 0) {
-    if (apc_fetch($this->_prefix . $name)) {
+    if ($this->_apc->get($this->_prefix . $name)) {
       return true;
     }
     return false;
@@ -75,10 +79,10 @@ class Apc implements StorageInterface {
    * @return bool
    */
   public function clear($name = '') {
-    if ($name == '') {
-      return apc_clear_cache('user');
+    if ($name == '') {      
+      return $this->_apc->flush();
     } else {
-      return apc_delete($this->_prefix . $name);
+      return $this->_apc->clear($this->_prefix . $name);
     }
   }
 
@@ -91,7 +95,7 @@ class Apc implements StorageInterface {
    * @return bool
    */
   public function put($name, $val, $compressed = false) {
-    $ret = apc_store($this->_prefix . $name, $val);
+    $ret = $this->_apc->put($this->_prefix . $name, $val);
     if ($ret && !in_array($name, $this->_fields)) {
       $this->_fields[] = $name;
     }
@@ -107,7 +111,7 @@ class Apc implements StorageInterface {
    * @return mixed
    */
   public function get($name, $compressed = false) {
-    $ret = apc_fetch($this->_prefix . $name);
+    $ret = $this->_apc->get($this->_prefix . $name);
 
     if ($ret !== false) {
       $this->_hits++;
@@ -130,7 +134,7 @@ class Apc implements StorageInterface {
     $ret = array();
     $ret['CACHE_TYPE'] = 'APC';
     $ret['CACHE_HITS'] = $this->_hits;
-    $ret = array_merge($ret, apc_cache_info('user'));
+    $ret = array_merge($ret, $this->_apc->info());
 
     if ($get_fields) {
       foreach ($this->_fields as $field) {

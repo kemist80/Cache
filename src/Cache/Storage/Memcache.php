@@ -6,8 +6,8 @@ namespace Kemist\Cache\Storage;
  * Memcache Storage
  * 
  * @package Kemist\Cache
- * 
- * @version 1.0.0
+ *
+ * @version 1.0.1
  */
 class Memcache implements StorageInterface {
 
@@ -52,10 +52,11 @@ class Memcache implements StorageInterface {
    * 
    * @param array $options
    */
-  public function __construct(array $options = array()) {
+  public function __construct(\Memcache $memcache, array $options = array()) {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
     $this->_server = (isset($options['server']) ? $options['server'] : $_SERVER['SERVER_ADDR']);
     $this->_port = (isset($options['port']) ? $options['port'] : 11211);
+    $this->_memcache = $memcache;
   }
 
   /**
@@ -66,11 +67,6 @@ class Memcache implements StorageInterface {
    * @throws \Kemist\Cache\Exception
    */
   public function init() {
-    if (!class_exists('Memcache') || !extension_loaded('memcache')) {
-      throw new \Kemist\Cache\Exception("Memcache extension not loaded!");
-    }
-
-    $this->_memcache = new \Memcache();
     return $this->_memcache->connect($this->_server, $this->_port);
   }
 
