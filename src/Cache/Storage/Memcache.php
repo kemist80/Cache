@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 class Memcache implements StorageInterface {
 
@@ -112,14 +112,10 @@ class Memcache implements StorageInterface {
   public function put($name, $val, $compressed = false) {
     $real_name = $this->_prefix . $name;
     $ret = true;
-    if ($compressed) {
-      if ($this->_memcache->replace($real_name, $val, MEMCACHE_COMPRESSED) == false) {
-        $ret = $this->_memcache->set($real_name, $val, MEMCACHE_COMPRESSED);
-      }
-    } else {
-      if ($this->_memcache->replace($real_name, $val) == false) {
-        $ret = $this->_memcache->set($real_name, $val);
-      }
+    if ($compressed && $this->_memcache->replace($real_name, $val, 2) == false) {
+      $ret = $this->_memcache->set($real_name, $val, 2);
+    } elseif ($this->_memcache->replace($real_name, $val) == false) {
+      $ret = $this->_memcache->set($real_name, $val);
     }
     if ($ret && !in_array($name, $this->_fields)) {
       $this->_fields[] = $name;
@@ -181,4 +177,3 @@ class Memcache implements StorageInterface {
   }
 
 }
-
