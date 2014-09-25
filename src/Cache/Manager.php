@@ -8,15 +8,13 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.2
+ * @version 1.0.3
  */
 class Manager {
 
   /**
    * Cache storage object
-   * 	 	
    * @var string
-   * @access private
    */
   protected $_storage;
 
@@ -100,6 +98,7 @@ class Manager {
   
   /**
    * Gets Cache info
+   * 
    * @return array
    */
   public function getInfo(){
@@ -108,6 +107,7 @@ class Manager {
   
   /**
    * Check if Cache is enabled
+   * 
    * @return bool
    */
   public function isEnabled() {
@@ -115,32 +115,29 @@ class Manager {
   }
 
   /**
-   * Check if Cache is enabled
+   * Enable/disable caching
    * 
    * @param bool $enabled
-   * 
-   * @return bool
    */
   public function setEnabled($enabled) {
     $this->_enabled = (bool) $enabled;
   }
 
   /**
-   * Check if $name cache exists and not older than $max_age
+   * Checks if the specified name in cache exists
    * 	 
    * @param string $name cache name
-   * @param int $max_age cache max lifetime
    *
    * @return bool
    */
-  public function exist($name, $max_age = 0) {
+  public function exist($name) {
     if (!$this->isEnabled()) {
       return false;
     }
 
     $this->init();
     $secret = $this->_encryptKey($name);
-    return ($this->_storage->exist($secret, $max_age) && ($name == '_system.info' || isset($this->_info[$name])));
+    return ($this->_storage->exist($secret) && ($name == '_system.info' || isset($this->_info[$name])));
   }
 
   /**

@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.1
+ * @version 1.0.2
  */
 class File implements StorageInterface {
 
@@ -81,22 +81,14 @@ class File implements StorageInterface {
   }
 
   /**
-   * Check if $name cache exists and not older than $max_age
+   * Checks if the specified name in cache exists
    * 	 
    * @param string $name cache name
-   * @param int $max_age cache max lifetime
    *
    * @return bool
    */
-  public function exist($name, $max_age = 0) {
-    if (
-            file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension) &&
-            ($max_age == 0 || date('U') - filemtime($this->_cache_dir . '.' . $name . '.' . $this->_extension) <= $max_age)
-    ) {
-      return true;
-    }
-
-    return false;
+  public function exist($name) {
+    return file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension);
   }
 
   /**

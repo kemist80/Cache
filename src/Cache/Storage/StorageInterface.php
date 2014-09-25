@@ -7,11 +7,11 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.0
+ * @version 1.0.1
  */
 interface StorageInterface {
 
-  public function exist($name, $max_age = 0);
+  public function exist($name);
 
   public function clear($name = '');
 

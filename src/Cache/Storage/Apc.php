@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.1
+ * @version 1.0.2
  */
 class Apc implements StorageInterface {
 
@@ -57,14 +57,13 @@ class Apc implements StorageInterface {
   }
 
   /**
-   * Check if $name cache exists and not older than $max_age
+   * Checks if the specified name in cache exists
    * 	 
    * @param string $name cache name
-   * @param int $max_age cache max lifetime
    *
    * @return bool
    */
-  public function exist($name, $max_age = 0) {
+  public function exist($name) {
     if ($this->_apc->get($this->_prefix . $name)) {
       return true;
     }
