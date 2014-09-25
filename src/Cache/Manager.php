@@ -8,7 +8,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.1
+ * @version 1.0.2
  */
 class Manager {
 
@@ -267,7 +267,7 @@ class Manager {
    */
   public function get($name) {
     if (!$this->isEnabled() || ($this->init() && $name != '_system.info' && !isset($this->_info[$name]))) {
-      return false;
+      return null;
     }
 
     $compressed=($name == '_system.info' ? true : $this->_info[$name]['compressed']);
@@ -280,7 +280,7 @@ class Manager {
 
     $this->_info[$name]['read_count'] = (isset($this->_info[$name]['read_count']) ? ++$this->_info[$name]['read_count'] : 1);
 
-    if ($ret) {
+    if ($ret !== null) {
       $this->_read_keys[] = $name;
       array_unique($this->_read_keys);
     } elseif (isset($this->_info[$name])) {
@@ -356,16 +356,19 @@ class Manager {
    * @return mixed
    */
   protected function _decode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
-    if ($var) {
-      switch ($store_method) {
-        case self::STORE_METHOD_JSON:
-          $var = json_decode($var, true);
-          break;
-        case self::STORE_METHOD_SERIALIZE:
-        default:
-          $var = unserialize($var);
-      }
+    if (!$var){
+      return null;
     }
+
+    switch ($store_method) {
+      case self::STORE_METHOD_JSON:
+        $var = json_decode($var, true);
+        break;
+      case self::STORE_METHOD_SERIALIZE:
+      default:
+        $var = unserialize($var);
+    }
+    
     return $var;
   }
 

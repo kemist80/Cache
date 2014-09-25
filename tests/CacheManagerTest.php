@@ -42,8 +42,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $ret = $cache->init();
     $this->assertTrue($ret);
   }
-  
-  
+
   public function testSuppressingStoreMethod() {
     $storage = $this->_getStorage();
     $storage->expects($this->any())
@@ -52,11 +51,23 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     ;
     $storage->expects($this->once())
             ->method('get')
-            ->will($this->returnValue(json_encode(array('test' => array('expire' => time() + 10,'store_method'=>'')))))
+            ->will($this->returnValue(json_encode(array('test' => array('expire' => time() + 10, 'store_method' => '')))))
     ;
     $cache = new Manager($storage);
     $ret = $cache->init();
     $this->assertTrue($ret);
+  }
+
+  public function testFalseValue() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->once())
+            ->method('get')
+            ->will($this->returnValue(serialize(false)))
+    ;
+    $cache = new Manager($storage);
+    $cache->put('false_test',false);    
+    $var = $cache->get('false_test');
+    $this->assertFalse($var);
   }
 
   public function testEnabling() {
@@ -233,7 +244,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache = new Manager($storage);
     $cache->init();
     $cache->setEnabled(false);
-    $this->assertFalse($cache->get('_system.info'));
+    $this->assertNull($cache->get('_system.info'));
   }
 
   public function testDisabledPut() {
@@ -266,21 +277,20 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache->setEnabled(false);
     $this->assertEquals($cache->getHits(), 0);
   }
-    
+
   public function testDisabledInfo() {
     $storage = $this->_getStorage();
     $cache = new Manager($storage);
     $cache->setEnabled(false);
     $this->assertFalse($cache->info());
   }
-  
-  
-  public function testFlush(){
+
+  public function testFlush() {
     $storage = $this->_getStorage();
     $cache = new Manager($storage);
     $cache->flush();
-    $info=$cache->getInfo();
-    $this->assertEquals($info,array());
+    $info = $cache->getInfo();
+    $this->assertEquals($info, array());
   }
 
   public function testExpireNotExisting() {
