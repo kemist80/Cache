@@ -1,6 +1,6 @@
 <?php
 
-use Kemist\Cache\Storage\Memcache;
+use Kemist\Cache\Storage\Memcache as Cache;
 
 class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
 
@@ -15,7 +15,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
 
   public function testInit() {
     $memcache = $this->_getMemCache();
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $init = $cache->init();
     $this->assertTrue($init);
   }
@@ -26,7 +26,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $var = $cache->exist('foo');
     $this->assertFalse($var);
   }
@@ -37,7 +37,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue(true))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $cache->put('test_variable', 1);
     $var = $cache->exist('test_variable');
     $this->assertTrue($var);
@@ -50,7 +50,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue($test))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $cache->put('test_variable', $test);
     $var = $cache->get('test_variable');
     $this->assertEquals($var, $test);
@@ -62,7 +62,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $cache->put('test_variable', 1);
     $cache->clear('test_variable');
     $this->assertFalse($cache->exist('test_variable'));
@@ -74,7 +74,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $cache->put('test_variable1', 1);
     $cache->put('test_variable2', 2);
     $cache->clear();
@@ -89,7 +89,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue($test))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
 
     $cache->put('test_variable', $test, true);
     $var = $cache->get('test_variable', true);
@@ -103,7 +103,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $cache->put('test_variable', $test, true);
     $var = $cache->get('test_variable');
     $this->assertNotEquals($var, $test);
@@ -115,7 +115,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->method('getStats')
             ->will($this->returnValue(array()))
     ;
-    $cache = new Memcache($memcache, array('server' => '127.0.0.1'));
+    $cache = new Cache($memcache, array('server' => '127.0.0.1'));
     $var = $cache->info(true);
     $this->assertArrayHasKey('CACHE_HITS', $var);
   }
