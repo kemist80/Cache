@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 class Memcache implements StorageInterface {
 
@@ -52,7 +52,7 @@ class Memcache implements StorageInterface {
    * 
    * @param array $options
    */
-  public function __construct(\Memcache $memcache, array $options = array()) {
+  public function __construct($memcache, array $options = array()) {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
     $this->_server = (isset($options['server']) ? $options['server'] : $_SERVER['SERVER_ADDR']);
     $this->_port = (isset($options['port']) ? $options['port'] : 11211);
