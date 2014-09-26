@@ -9,13 +9,13 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.4
+ * @version 1.0.5
  */
 class Manager {
 
   /**
    * Cache storage object
-   * @var string
+   * @var StorageInterface
    */
   protected $_storage;
 
@@ -519,35 +519,43 @@ class Manager {
     }
     return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
   }
+  
+  /**
+   * Gets an integer typed parameter from cache info
+   * 
+   * @param string $name
+   * @param string $param_name
+   * 
+   * @return int
+   */
+  protected function _getIntegerInfo($name, $param_name) {
+    $this->init();
+    if (!isset($this->_info[$name])) {
+      return false;
+    }
+    return isset($this->_info[$name][$param_name]) ? (int)$this->_info[$name][$param_name] : 0;
+  }
 
   /**
    * Gets read count of a cached value
    * 
-   * @param string $key Cache name
+   * @param string $name Cache name
    * 	 
    * @return int
    */
-  public function getReadCount($key) {
-    $this->init();
-    if (!isset($this->_info[$key])) {
-      return false;
-    }
-    return isset($this->_info[$key]['read_count']) ? $this->_info[$key]['read_count'] : 0;
+  public function getReadCount($name) {
+    return $this->_getIntegerInfo($name,'read_count');
   }
 
   /**
    * Gets write count of a cached value
    * 
-   * @param string $key Cache name
+   * @param string $name Cache name
    * 	 
    * @return int
    */
-  public function getWriteCount($key) {
-    $this->init();
-    if (!isset($this->_info[$key])) {
-      return false;
-    }
-    return isset($this->_info[$key]['write_count']) ? $this->_info[$key]['write_count'] : 0;
+  public function getWriteCount($name) {
+    return $this->_getIntegerInfo($name,'write_count');
   }
 
   /**
