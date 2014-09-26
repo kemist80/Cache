@@ -426,7 +426,7 @@ class Manager {
       return 0;
     }
     $this->init();
-    return $this->_storage->hits;
+    return $this->_storage->getHits();
   }
 
   /**
