@@ -1,6 +1,7 @@
 <?php
 
 namespace Kemist\Cache;
+
 use Kemist\Cache\Storage\StorageInterface;
 
 /**
@@ -8,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.3
+ * @version 1.0.4
  */
 class Manager {
 
@@ -50,7 +51,7 @@ class Manager {
 
   const STORE_METHOD_SERIALIZE = 1;
   const STORE_METHOD_JSON = 2;
-  
+
   /**
    * Constructor 
    * 
@@ -79,10 +80,10 @@ class Manager {
       $info = $this->get('_system.info');
       $this->_info = (is_array($info) ? $info : array());
       foreach ($this->_info as $key => $data) {
-        if (!isset($data['expire']) || $data['expire'] == 0) {
+        if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
         }
-        if ((time() > $data['expire'] && $this->exist($key)) ||
+        if ((time() > $data['expiry'] && $this->exist($key)) ||
                 strlen($data['store_method']) == 0
         ) {
           $this->clear($key);
@@ -95,16 +96,18 @@ class Manager {
     $this->_initialised = 1;
     return true;
   }
-  
+
   /**
    * Gets Cache info
    * 
+   * @param $name Cache key
+   * 
    * @return array
    */
-  public function getInfo(){
-    return $this->_info;
+  public function getInfo($name = '') {
+    return $name == '' ? $this->_info : (isset($this->_info[$name]) ? $this->_info[$name] : null);
   }
-  
+
   /**
    * Check if Cache is enabled
    * 
@@ -193,12 +196,12 @@ class Manager {
    * @param string $name cache name
    * @param mixed $val variable to be stored
    * @param bool $compressed Compressed storage
-   * @param int $expires Expires in the given seconds	(0:never) 
+   * @param int $expiry Expires in the given seconds	(0:never) 
    * @param string $store_method Storing method (serialize|json)	 	 
    *
    * @return bool
    */
-  public function put($name, $val, $compressed = false, $expires = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
+  public function put($name, $val, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
     if (!$this->isEnabled()) {
       return false;
     }
@@ -210,14 +213,26 @@ class Manager {
 
     $read_count = (isset($this->_info[$name]['read_count']) ? $this->_info[$name]['read_count'] : 0);
     $write_count = (isset($this->_info[$name]['write_count']) ? $this->_info[$name]['write_count'] : 0);
+    $created = (isset($this->_info[$name]['created']) ? $this->_info[$name]['created'] : time());
+    $last_read = (isset($this->_info[$name]['last_read']) ? $this->_info[$name]['last_read'] : null);
+
+    if (is_string($expiry)) {
+      $expiry = $this->_extractExpiryDate($expiry);
+    } elseif ((int) $expiry > 0) {
+      $expiry = ($expiry < time() ? time() + $expiry : $expiry);
+    } else {
+      $expiry = 0;
+    }
 
     $this->_info[$name] = array(
-        'expire' => ($expires == 0 ? 0 : time() + $expires),
+        'expiry' => $expiry,
         'size' => strlen($data),
         'compressed' => $compressed,
         'store_method' => $store_method,
-        'created' => time(),
+        'created' => $created,
         'last_access' => time(),
+        'last_read' => $last_read,
+        'last_write' => time(),
         'read_count' => $read_count,
         'write_count' => ++$write_count
     );
@@ -226,18 +241,23 @@ class Manager {
   }
 
   /**
-   * Alias for storing a value in cache
-   * 	 
-   * @param string $name cache name
-   * @param mixed $val variable to be stored
-   * @param bool $compressed Compressed storage
-   * @param int $expires Expires in the given seconds	(0:never) 
-   * @param int $store_method Storing method (serialize|json)	 	 
-   *
-   * @return bool
+   * Extracts expiry by string
+   * 
+   * @param string $expiry
+   * 
+   * @return int
    */
-  public function set($name, $val, $compressed = false, $expires = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->put($name, $val, $compressed, $expires, $store_method);
+  protected function _extractExpiryDate($expiry) {
+    if ($expiry == 'never') {
+      return 0;
+    }
+
+    if (strtotime($expiry) === false) {
+      throw new \InvalidArgumentException('Invalid date format!');
+    }
+
+    $date = new \DateTime($expiry);
+    return $date->format('U') < time() ? 0 : $date->format('U');
   }
 
   /**
@@ -246,13 +266,28 @@ class Manager {
    * @param string $name cache name
    * @param mixed $val variable to be stored
    * @param bool $compressed Compressed storage
-   * @param int $expires Expires in the given seconds	(0:never) 
+   * @param int $expiry Expires in the given seconds	(0:never) 
    * @param int $store_method Storing method (serialize|json)	 	 
    *
    * @return bool
    */
-  public function store($name, $val, $compressed = false, $expires = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->put($name, $val, $compressed, $expires, $store_method);
+  public function set($name, $val, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
+    return $this->put($name, $val, $compressed, $expiry, $store_method);
+  }
+
+  /**
+   * Alias for storing a value in cache
+   * 	 
+   * @param string $name cache name
+   * @param mixed $val variable to be stored
+   * @param bool $compressed Compressed storage
+   * @param int $expiry Expires in the given seconds	(0:never) 
+   * @param int $store_method Storing method (serialize|json)	 	 
+   *
+   * @return bool
+   */
+  public function store($name, $val, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
+    return $this->put($name, $val, $compressed, $expiry, $store_method);
   }
 
   /**
@@ -267,13 +302,14 @@ class Manager {
       return null;
     }
 
-    $compressed=($name == '_system.info' ? true : $this->_info[$name]['compressed']);
-    $store_method=($name == '_system.info' ? self::STORE_METHOD_JSON : $this->_info[$name]['store_method']);
+    $compressed = ($name == '_system.info' ? true : $this->_info[$name]['compressed']);
+    $store_method = ($name == '_system.info' ? self::STORE_METHOD_JSON : $this->_info[$name]['store_method']);
     $secret = $this->_encryptKey($name);
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
 
     $this->_info[$name]['last_access'] = time();
+    $this->_info[$name]['last_read'] = time();
 
     $this->_info[$name]['read_count'] = (isset($this->_info[$name]['read_count']) ? ++$this->_info[$name]['read_count'] : 1);
 
@@ -353,7 +389,7 @@ class Manager {
    * @return mixed
    */
   protected function _decode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
-    if (!$var){
+    if (!$var) {
       return null;
     }
 
@@ -365,7 +401,7 @@ class Manager {
       default:
         $var = unserialize($var);
     }
-    
+
     return $var;
   }
 
@@ -404,45 +440,84 @@ class Manager {
   }
 
   /**
-   * Gets expiral information of a cached value (0: never)
+   * Gets expiry information of a cached value (0: never)
    * 
-   * @param string $key Cache name
+   * @param string $name Cache name
+   * @param string $format Date format
    * 	 
-   * @return int Timestamp when value expires	 	 
+   * @return string
    */
-  public function getExpire($key) {
-    if (!isset($this->_info[$key])) {
+  public function getExpiry($name, $format = 'U') {
+    $this->init();
+    if (!isset($this->_info[$name])) {
       return false;
     }
-    return isset($this->_info[$key]['expire']) ? $this->_info[$key]['expire'] : null;
+    return isset($this->_info[$name]['expiry']) ? ($this->_info[$name]['expiry'] == 0 ? 0 : date($format, $this->_info[$name]['expiry'])) : null;
   }
 
   /**
-   * Gets created time of a cached value
+   * Gets created (first write) time of a cached value
    * 
-   * @param string $key Cache name
+   * @param string $name Cache name
+   * @param string $format Date format
    * 	 
-   * @return int Timestamp when value was created	 	 
+   * @return string
    */
-  public function getCreated($key) {
-    if (!isset($this->_info[$key])) {
-      return false;
-    }
-    return isset($this->_info[$key]['created']) ? $this->_info[$key]['created'] : null;
+  public function getCreated($name, $format = 'U') {
+    return $this->_getDateInfo($name, 'created', $format);
   }
 
   /**
-   * Gets last accessed time of a cached value
+   * Gets last access (either read or write) time of a cached value
    * 
-   * @param string $key Cache name
+   * @param string $name Cache name
+   * @param string $format Date format
    * 	 
-   * @return int Timestamp when value was last accessed	 	 
+   * @return string
    */
-  public function getLastAccess($key) {
-    if (!isset($this->_info[$key])) {
+  public function getLastAccess($name, $format = 'U') {
+    return $this->_getDateInfo($name, 'last_access', $format);
+  }
+
+  /**
+   * Gets last read time of a cached value
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getLastRead($name, $format = 'U') {
+    return $this->_getDateInfo($name, 'last_read', $format);
+  }
+
+  /**
+   * Gets last write time of a cached value
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getLastWrite($name, $format = 'U') {
+    return $this->_getDateInfo($name, 'last_write', $format);
+  }
+
+  /**
+   * Gets a date typed parameter from cache info
+   * 
+   * @param string $name
+   * @param string $param_name
+   * @param string $format
+   * 
+   * @return string
+   */
+  protected function _getDateInfo($name, $param_name, $format = 'U') {
+    $this->init();
+    if (!isset($this->_info[$name])) {
       return false;
     }
-    return isset($this->_info[$key]['last_access']) ? $this->_info[$key]['last_access'] : null;
+    return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
   }
 
   /**
@@ -453,6 +528,7 @@ class Manager {
    * @return int
    */
   public function getReadCount($key) {
+    $this->init();
     if (!isset($this->_info[$key])) {
       return false;
     }
@@ -467,6 +543,7 @@ class Manager {
    * @return int
    */
   public function getWriteCount($key) {
+    $this->init();
     if (!isset($this->_info[$key])) {
       return false;
     }
@@ -479,6 +556,7 @@ class Manager {
    * @return array
    */
   public function getKeys() {
+    $this->init();
     return array_keys($this->_info);
   }
 

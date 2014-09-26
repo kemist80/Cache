@@ -36,7 +36,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     ;
     $storage->expects($this->once())
             ->method('get')
-            ->will($this->returnValue(json_encode(array('test' => array('expire' => time() - 10)))))
+            ->will($this->returnValue(json_encode(array('test' => array('expiry' => time() - 10)))))
     ;
     $cache = new Manager($storage);
     $ret = $cache->init();
@@ -51,7 +51,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     ;
     $storage->expects($this->once())
             ->method('get')
-            ->will($this->returnValue(json_encode(array('test' => array('expire' => time() + 10, 'store_method' => '')))))
+            ->will($this->returnValue(json_encode(array('test' => array('expiry' => time() + 10, 'store_method' => '')))))
     ;
     $cache = new Manager($storage);
     $ret = $cache->init();
@@ -112,14 +112,76 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($ret, 1);
   }
 
-  public function testExpire() {
+  public function testExpiry() {
     $storage = $this->_getStorage();
 
     $cache = new Manager($storage);
     $exp = time() + 86400;
     $cache->put('test_variable', 1, false, 86400);
-    $expire = $cache->getExpire('test_variable');
-    $this->assertEquals($expire, $exp);
+    $expiry = $cache->getExpiry('test_variable');
+    $this->assertEquals($expiry, $exp);
+  }
+  
+  public function testNeverExpires() {
+    $storage = $this->_getStorage();
+
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1, false, 'never');
+    $expiry = $cache->getExpiry('test_variable');
+    $this->assertEquals($expiry, 0);
+  }
+  
+  public function testExpiryFullTimestamp() {
+    $storage = $this->_getStorage();
+
+    $cache = new Manager($storage);
+    $timestamp=time()+86400;
+    $cache->put('test_variable', 1, false, $timestamp);
+    $expiry = $cache->getExpiry('test_variable');
+    $this->assertEquals($expiry, $timestamp);
+  }
+  
+  public function testExpiryRelativeOneHour() {
+    $storage = $this->_getStorage();
+
+    $cache = new Manager($storage);
+    $timestamp=time()+3600;
+    $cache->put('test_variable', 1, false, '1hour');
+    $expiry = $cache->getExpiry('test_variable');
+    $this->assertEquals($expiry, $timestamp);
+  }
+  
+  public function testExpiryRelativeTwoDays() {
+    $storage = $this->_getStorage();
+
+    $cache = new Manager($storage);
+    $timestamp=time()+(86400*2);
+    $cache->put('test_variable', 1, false, '2days');
+    $expiry = $cache->getExpiry('test_variable');
+    $this->assertEquals($expiry, $timestamp);
+  }
+  
+  public function testExpiryInvalidDateString() {
+    $storage = $this->_getStorage();
+
+    $cache = new Manager($storage);
+    $ret=true;
+    try{
+      $cache->put('test_variable', 1, false, 'iNvAlId DaTeStRiNg');
+    } catch (\InvalidArgumentException $ex) {
+      $ret=false;
+    }
+    
+    $this->assertFalse($ret);
+  }
+  
+  public function testExpiryInPast() {
+    $storage = $this->_getStorage();
+
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1, false, '1999-05-08');
+    $expiry = $cache->getExpiry('test_variable');
+    $this->assertEquals($expiry, 0);
   }
 
   public function testWriteCount() {
@@ -157,7 +219,9 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache = new Manager($storage);
     $time = time();
     $cache->put('test_variable', 1);
-
+    sleep(1);
+    $cache->put('test_variable', 1);
+    
     $created = $cache->getCreated('test_variable');
     $this->assertEquals($created, $time);
   }
@@ -177,6 +241,39 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $last_access = $cache->getLastAccess('test_variable');
     $this->assertEquals($last_access, $time);
   }
+  
+  public function testLastRead() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('get')
+            ->will($this->returnValue(serialize(1)))
+    ;
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1);
+    sleep(1);
+    $time = time();
+    $cache->get('test_variable');
+
+    $last_access = $cache->getLastRead('test_variable');
+    $this->assertEquals($last_access, $time);
+  }
+  
+  public function testLastWrite() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('get')
+            ->will($this->returnValue(serialize(1)))
+    ;
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1);
+    sleep(1);
+    $time = time();
+    $cache->put('test_variable',2);
+
+    $last_access = $cache->getLastWrite('test_variable');
+    $this->assertEquals($last_access, $time);
+  }
+  
 
   public function testGetKeys() {
     $storage = $this->_getStorage();
@@ -293,14 +390,13 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($info, array());
   }
 
-  public function testExpireNotExisting() {
+  public function testExpiryNotExisting() {
     $storage = $this->_getStorage();
 
     $cache = new Manager($storage);
-    $exp = time() + 86400;
     $cache->put('test_variable', 1, false, 86400);
-    $expire = $cache->getExpire('test_variable2');
-    $this->assertFalse($expire);
+    $expiry = $cache->getExpiry('test_variable2');
+    $this->assertFalse($expiry);
   }
 
   public function testWriteCountNotExisting() {
@@ -336,7 +432,6 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Manager($storage);
-    $time = time();
     $cache->put('test_variable', 1);
 
     $created = $cache->getCreated('test_variable2');
@@ -352,7 +447,6 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache = new Manager($storage);
     $cache->put('test_variable', 1);
     sleep(1);
-    $time = time();
     $cache->get('test_variable');
 
     $last_access = $cache->getLastAccess('test_variable2');
