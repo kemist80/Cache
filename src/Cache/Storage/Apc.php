@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.2
+ * @version 1.0.3
  */
 class Apc implements StorageInterface {
 
@@ -121,6 +121,15 @@ class Apc implements StorageInterface {
 
     return $ret;
   }
+  
+  /**
+   * Retrieves cache hits
+   * 
+   * @return int
+   */
+  public function getHits() {
+    return $this->_hits;
+  }  
 
   /**
    * Retrieves information of Cache state

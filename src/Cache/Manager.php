@@ -464,7 +464,7 @@ class Manager {
    * @return string
    */
   public function getCreated($name, $format = 'U') {
-    return $this->_getDateInfo($name, 'created', $format);
+    return $this->_getInfoItem($name, 'created', 'date', $format);
   }
 
   /**
@@ -476,7 +476,7 @@ class Manager {
    * @return string
    */
   public function getLastAccess($name, $format = 'U') {
-    return $this->_getDateInfo($name, 'last_access', $format);
+    return $this->_getInfoItem($name, 'last_access', 'date', $format);
   }
 
   /**
@@ -488,7 +488,7 @@ class Manager {
    * @return string
    */
   public function getLastRead($name, $format = 'U') {
-    return $this->_getDateInfo($name, 'last_read', $format);
+    return $this->_getInfoItem($name, 'last_read', 'date', $format);
   }
 
   /**
@@ -500,42 +500,34 @@ class Manager {
    * @return string
    */
   public function getLastWrite($name, $format = 'U') {
-    return $this->_getDateInfo($name, 'last_write', $format);
+    return $this->_getInfoItem($name, 'last_write', 'date', $format);
   }
 
   /**
-   * Gets a date typed parameter from cache info
+   * Gets a parameter from cache info
    * 
    * @param string $name
    * @param string $param_name
+   * @param string $type
    * @param string $format
    * 
-   * @return string
+   * @return string|int
    */
-  protected function _getDateInfo($name, $param_name, $format = 'U') {
+  protected function _getInfoItem($name, $param_name, $type='int', $format = 'U') {
     $this->init();
     if (!isset($this->_info[$name])) {
       return false;
     }
-    return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
+    switch ($type){
+      case 'int':
+        return isset($this->_info[$name][$param_name]) ? (int)$this->_info[$name][$param_name] : 0;        
+      case 'date':
+        return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
+      default:
+        return null;
+    }
   }
   
-  /**
-   * Gets an integer typed parameter from cache info
-   * 
-   * @param string $name
-   * @param string $param_name
-   * 
-   * @return int
-   */
-  protected function _getIntegerInfo($name, $param_name) {
-    $this->init();
-    if (!isset($this->_info[$name])) {
-      return false;
-    }
-    return isset($this->_info[$name][$param_name]) ? (int)$this->_info[$name][$param_name] : 0;
-  }
-
   /**
    * Gets read count of a cached value
    * 
@@ -544,7 +536,7 @@ class Manager {
    * @return int
    */
   public function getReadCount($name) {
-    return $this->_getIntegerInfo($name,'read_count');
+    return $this->_getInfoItem($name,'read_count');
   }
 
   /**
@@ -555,7 +547,7 @@ class Manager {
    * @return int
    */
   public function getWriteCount($name) {
-    return $this->_getIntegerInfo($name,'write_count');
+    return $this->_getInfoItem($name,'write_count');
   }
 
   /**

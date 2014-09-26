@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.3
+ * @version 1.0.4
  */
 class File implements StorageInterface {
 
@@ -134,7 +134,7 @@ class File implements StorageInterface {
     $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb');
     if ($f) {
       $success = true;
-      $ret=false;
+      $ret = false;
       if ($this->_file_locking) {
         $success = flock($f, LOCK_EX);
       }
@@ -195,9 +195,16 @@ class File implements StorageInterface {
       }
     }
 
-
-
     return $ret;
+  }
+
+  /**
+   * Retrieves cache hits
+   * 
+   * @return int
+   */
+  public function getHits() {
+    return $this->_hits;
   }
 
   /**
