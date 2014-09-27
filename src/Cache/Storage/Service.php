@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.1
+ * @version 1.0.2
  */
 abstract class Service {
   
@@ -35,6 +35,12 @@ abstract class Service {
    * @var string 
    */
   protected $_info_method = 'info';
+  
+  /**
+   * Key prefix to avoid collisions
+   * @var string 
+   */
+  protected $_prefix;
   
   /**
    * Retrieves the content of $name cache
