@@ -126,7 +126,7 @@ class File extends Service implements StorageInterface {
       }
       if ($success) {
         $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));
-        $ret ? $this->_storeName($name,$ret) : null;
+        $ret ? $this->_storeName($name) : null;
       }
 
       if ($this->_file_locking && $success) {
