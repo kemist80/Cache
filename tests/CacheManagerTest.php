@@ -452,5 +452,28 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $last_access = $cache->getLastAccess('test_variable2');
     $this->assertFalse($last_access);
   }
+  
+  public function testDefaultValue(){
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $default=$cache->get('test_variable','default');
+    $this->assertEquals($default,'default');
+  }
+  
+  public function testDefaultClosure(){
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $default=$cache->get('test_variable',function(){ return 'default'; });
+    $this->assertEquals($default,'default');
+  }
+  
+  public function testGetOrPut(){
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $default=$cache->getOrPut('test_variable','default');
+    $this->assertEquals($default,'default');
+    $info=$cache->getInfo();    
+    $this->assertArrayHasKey('test_variable',$info);
+  }
 
 }

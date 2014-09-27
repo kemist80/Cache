@@ -48,6 +48,9 @@ if ($cache->exist('variable')){
 // Deletes a variable from cache
 $cache->delete('variable');
 
+// Reads back a variable passing a default value in case it not exists
+echo $cache->get('variable','default value');
+
 // Deletes all cached variables
 $cache->flush();
 
@@ -89,6 +92,21 @@ $array=array('a'=>'apple','b'=>'bike');
 $cache->put('test.array',$array,false,0,Cache::STORE_METHOD_JSON);
 // By reading back you don't need to know what was the storing method of the variable
 var_dump($cache->get('test.array'));
+
+```
+Default value:
+```php
+// Get can return a default value if cached variable not exists
+echo $cache->get('test.default','default');
+
+// You can pass even a closure
+echo $cache->get('test.default',function(){return 'default';});
+
+// Initial value setting (store default value if not exists)
+echo $cache->getOrPut('test.initial','initial',false,'3hours');
+
+// The same with closure
+echo $cache->getOrPut('test.initial',function(){return 'default';},false,'3hours');
 
 ```
 Cached variable statistics:

@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.6
+ * @version 1.0.7
  */
 class Manager {
 
@@ -294,12 +294,13 @@ class Manager {
    * Retrieves the content of $name cache
    * 	 
    * @param string $name cache name
+   * @param mixed $default
    * 	 
    * @return mixed
    */
-  public function get($name) {
+  public function get($name, $default=null) {
     if (!$this->isEnabled() || ($this->init() && $name != '_system.info' && !isset($this->_info[$name]))) {
-      return null;
+      return ($default instanceof \Closure ? call_user_func($default) : $default);
     }
 
     $compressed = ($name == '_system.info' ? true : $this->_info[$name]['compressed']);
@@ -321,6 +322,26 @@ class Manager {
     }
 
     return $ret;
+  }
+  
+  /**
+   * Attempts to get a value and if not exists store the given default variable
+   * 
+   * @param string $name cache name
+   * @param mixed $default default value
+   * @param bool $compressed Compressed storage
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
+   * @param int $store_method Storing method (serialize|json)	 	 
+   * 
+   * @return mixed
+   */
+  public function getOrPut($name,$default,$compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE){
+    if ($this->exist($name)){
+      return $this->get($name);
+    }
+    $value=($default instanceof \Closure ? call_user_func($default) : $default);
+    $this->put($name, $value, $compressed, $expiry, $store_method);
+    return $value;
   }
 
   /**
