@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.5
+ * @version 1.0.6
  */
 class Apc extends Service implements StorageInterface {
 
@@ -71,9 +71,7 @@ class Apc extends Service implements StorageInterface {
    */
   public function put($name, $val, $compressed = false) {
     $ret = $this->_service->put($this->_prefix . $name, $val);
-    if ($ret && !in_array($name, $this->_fields)) {
-      $this->_fields[] = $name;
-    }
+    $ret ? $this->_storeName($name) : null;
     return $ret;
   }
 

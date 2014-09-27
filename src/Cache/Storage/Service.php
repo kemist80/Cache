@@ -10,38 +10,38 @@ namespace Kemist\Cache\Storage;
  * @version 1.0.2
  */
 abstract class Service {
-  
+
   /**
    * Cached field names
    * 	 	
    * @var array
    */
   protected $_fields = array();
-  
+
   /**
    * Number of hits
    * @var int
    */
   protected $_hits = 0;
-  
+
   /**
    * Cache service Object
    * @var object
    */
   protected $_service;
-  
+
   /**
    * Info method
    * @var string 
    */
   protected $_info_method = 'info';
-  
+
   /**
    * Key prefix to avoid collisions
    * @var string 
    */
-  protected $_prefix='';
-  
+  protected $_prefix = '';
+
   /**
    * Retrieves the content of $name cache
    * 	 
@@ -54,10 +54,7 @@ abstract class Service {
     $ret = $this->_service->get($this->_prefix . $name);
     if ($ret !== false) {
       $this->_hits++;
-
-      if (!in_array($name, $this->_fields)) {
-        $this->_fields[] = $name;
-      }
+      $this->_storeName($name);
     }
 
     return $ret;
@@ -94,6 +91,17 @@ abstract class Service {
    */
   public function getHits() {
     return $this->_hits;
+  }
+
+  /**
+   * Stores cache name
+   * 
+   * @param string $name
+   */
+  protected function _storeName($name) {
+    if (!in_array($name, $this->_fields)) {
+      $this->_fields[] = $name;
+    }
   }
 
 }

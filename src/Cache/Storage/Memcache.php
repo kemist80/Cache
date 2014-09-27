@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.8
+ * @version 1.0.9
  */
 class Memcache extends Service implements StorageInterface {
 
@@ -98,9 +98,7 @@ class Memcache extends Service implements StorageInterface {
     } elseif ($this->_service->replace($real_name, $val) == false) {
       $ret = $this->_service->set($real_name, $val);
     }
-    if ($ret && !in_array($name, $this->_fields)) {
-      $this->_fields[] = $name;
-    }
+    $ret ? $this->_storeName($name) : null;
     return $ret;
   }
 

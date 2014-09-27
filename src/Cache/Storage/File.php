@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.6
+ * @version 1.0.7
  */
 class File extends Service implements StorageInterface {
 
@@ -126,10 +126,7 @@ class File extends Service implements StorageInterface {
       }
       if ($success) {
         $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));
-
-        if ($ret && !in_array($name, $this->_fields)) {
-          $this->_fields[] = $name;
-        }
+        $ret ? $this->_storeName($name,$ret) : null;
       }
 
       if ($this->_file_locking && $success) {
@@ -175,10 +172,7 @@ class File extends Service implements StorageInterface {
       fclose($f);
       $this->_hits++;
       $ret = ($compressed ? gzuncompress($temp) : $temp);
-
-      if (!in_array($name, $this->_fields)) {
-        $this->_fields[] = $name;
-      }
+      $ret ? $this->_storeName($name) : null;
     }
 
     return $ret;
