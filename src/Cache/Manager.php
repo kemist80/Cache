@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.5
+ * @version 1.0.6
  */
 class Manager {
 
@@ -196,7 +196,7 @@ class Manager {
    * @param string $name cache name
    * @param mixed $val variable to be stored
    * @param bool $compressed Compressed storage
-   * @param int $expiry Expires in the given seconds	(0:never) 
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
    * @param string $store_method Storing method (serialize|json)	 	 
    *
    * @return bool
@@ -266,7 +266,7 @@ class Manager {
    * @param string $name cache name
    * @param mixed $val variable to be stored
    * @param bool $compressed Compressed storage
-   * @param int $expiry Expires in the given seconds	(0:never) 
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
    * @param int $store_method Storing method (serialize|json)	 	 
    *
    * @return bool
@@ -281,7 +281,7 @@ class Manager {
    * @param string $name cache name
    * @param mixed $val variable to be stored
    * @param bool $compressed Compressed storage
-   * @param int $expiry Expires in the given seconds	(0:never) 
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
    * @param int $store_method Storing method (serialize|json)	 	 
    *
    * @return bool
@@ -513,21 +513,21 @@ class Manager {
    * 
    * @return string|int
    */
-  protected function _getInfoItem($name, $param_name, $type='int', $format = 'U') {
+  protected function _getInfoItem($name, $param_name, $type = 'int', $format = 'U') {
     $this->init();
     if (!isset($this->_info[$name])) {
       return false;
     }
-    switch ($type){
+    switch ($type) {
       case 'int':
-        return isset($this->_info[$name][$param_name]) ? (int)$this->_info[$name][$param_name] : 0;        
+        return isset($this->_info[$name][$param_name]) ? (int) $this->_info[$name][$param_name] : 0;
       case 'date':
         return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
       default:
         return null;
     }
   }
-  
+
   /**
    * Gets read count of a cached value
    * 
@@ -536,7 +536,7 @@ class Manager {
    * @return int
    */
   public function getReadCount($name) {
-    return $this->_getInfoItem($name,'read_count');
+    return $this->_getInfoItem($name, 'read_count');
   }
 
   /**
@@ -547,7 +547,7 @@ class Manager {
    * @return int
    */
   public function getWriteCount($name) {
-    return $this->_getInfoItem($name,'write_count');
+    return $this->_getInfoItem($name, 'write_count');
   }
 
   /**

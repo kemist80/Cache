@@ -7,9 +7,9 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.4
+ * @version 1.0.5
  */
-class File implements StorageInterface {
+class File extends Service implements StorageInterface {
 
   /**
    * Number of hits
@@ -196,15 +196,6 @@ class File implements StorageInterface {
     }
 
     return $ret;
-  }
-
-  /**
-   * Retrieves cache hits
-   * 
-   * @return int
-   */
-  public function getHits() {
-    return $this->_hits;
   }
 
   /**

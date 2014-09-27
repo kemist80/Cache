@@ -7,15 +7,15 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.6
+ * @version 1.0.7
  */
-class Memcache implements StorageInterface {
+class Memcache extends Service implements StorageInterface {
 
   /**
    * Memcache object
    * @var object
    */
-  protected $_memcache;
+  protected $_service;
 
   /**
    * Number of hits
@@ -48,6 +48,12 @@ class Memcache implements StorageInterface {
   protected $_port;
 
   /**
+   * Info method
+   * @var string 
+   */
+  protected $_info_method = 'getStats';
+
+  /**
    * Constructor
    * 
    * @param array $options
@@ -56,7 +62,7 @@ class Memcache implements StorageInterface {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
     $this->_server = (isset($options['server']) ? $options['server'] : '127.0.0.1');
     $this->_port = (isset($options['port']) ? $options['port'] : 11211);
-    $this->_memcache = $memcache;
+    $this->_service = $memcache;
   }
 
   /**
@@ -67,7 +73,7 @@ class Memcache implements StorageInterface {
    * @throws \Kemist\Cache\Exception
    */
   public function init() {
-    return $this->_memcache->connect($this->_server, $this->_port);
+    return $this->_service->connect($this->_server, $this->_port);
   }
 
   /**
@@ -78,7 +84,7 @@ class Memcache implements StorageInterface {
    * @return bool
    */
   public function exist($name) {
-    if ($this->_memcache->get($this->_prefix . $name)) {
+    if ($this->_service->get($this->_prefix . $name)) {
       return true;
     }
     return false;
@@ -93,9 +99,9 @@ class Memcache implements StorageInterface {
    */
   public function clear($name = '') {
     if ($name == '') {
-      return $this->_memcache->flush();
+      return $this->_service->flush();
     } else {
-      return $this->_memcache->delete($this->_prefix . $name);
+      return $this->_service->delete($this->_prefix . $name);
     }
   }
 
@@ -111,10 +117,10 @@ class Memcache implements StorageInterface {
   public function put($name, $val, $compressed = false) {
     $real_name = $this->_prefix . $name;
     $ret = true;
-    if ($compressed && $this->_memcache->replace($real_name, $val, 2) == false) {
-      $ret = $this->_memcache->set($real_name, $val, 2);
-    } elseif ($this->_memcache->replace($real_name, $val) == false) {
-      $ret = $this->_memcache->set($real_name, $val);
+    if ($compressed && $this->_service->replace($real_name, $val, 2) == false) {
+      $ret = $this->_service->set($real_name, $val, 2);
+    } elseif ($this->_service->replace($real_name, $val) == false) {
+      $ret = $this->_service->set($real_name, $val);
     }
     if ($ret && !in_array($name, $this->_fields)) {
       $this->_fields[] = $name;
@@ -123,65 +129,12 @@ class Memcache implements StorageInterface {
   }
 
   /**
-   * Retrieves the content of $name cache
-   * 	 
-   * @param string $name cache name
-   * @param bool $compressed
-   *
-   * @return mixed
-   */
-  public function get($name, $compressed = false) {
-    $ret = $this->_memcache->get($this->_prefix . $name);
-    if ($ret !== false) {
-      $this->_hits++;
-
-      if (!in_array($name, $this->_fields)) {
-        $this->_fields[] = $name;
-      }
-    }
-
-    return $ret;
-  }
-
-  /**
-   * Retrieves information of Cache state
-   * 
-   * @param bool $get_fields
-   *  
-   * @return array
-   */
-  public function info($get_fields = false) {
-    $ret = array();
-    $ret['CACHE_TYPE'] = 'Memcache';
-    $ret['CACHE_HITS'] = $this->_hits;
-
-    $ret = array_merge($ret, $this->_memcache->getStats());
-
-    if ($get_fields) {
-      foreach ($this->_fields as $field) {
-        $ret['field_content'][$field] = $this->get($field);
-      }
-    }
-
-    return $ret;
-  }
-  
-  /**
-   * Retrieves cache hits
-   * 
-   * @return int
-   */
-  public function getHits() {
-    return $this->_hits;
-  }
-
-  /**
    * Destructor
    * 
    * @return type
    */
   public function __destruct() {
-    return is_object($this->_memcache) ? $this->_memcache->close() : null;
+    return is_object($this->_service) ? $this->_service->close() : null;
   }
 
 }
