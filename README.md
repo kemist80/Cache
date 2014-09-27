@@ -112,7 +112,7 @@ echo 'Last write:'.$cache->getLastWrite('test.array','Y-m-d H:i:s');
 echo 'Write count:'.$cache->getWriteCount('variable');
 
 // Displays how many times cached value was read since creation
-echo 'Write count:'.$cache->getReadCount('test.compressed');
+echo 'Read count:'.$cache->getReadCount('test.compressed');
 
 // You can retrieve all of the above statistics at once
 var_dump($cache->getInfo('test.object'));
@@ -120,7 +120,7 @@ var_dump($cache->getInfo('test.object'));
 // Displays all cached variable names
 var_dump($cache->getKeys());
 
-// Displays all cached variable names that was read back in current runtime session
+// Displays all cached variable names that were read in current runtime session
 var_dump($cache->getReadKeys());
 
 ```
