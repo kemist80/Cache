@@ -19,7 +19,6 @@ Via composer:
 }
 ```
 
-
 ## Usage
 
 Initialization:
