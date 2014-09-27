@@ -7,33 +7,9 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.7
+ * @version 1.0.8
  */
 class Memcache extends Service implements StorageInterface {
-
-  /**
-   * Memcache object
-   * @var object
-   */
-  protected $_service;
-
-  /**
-   * Number of hits
-   * @var int
-   */
-  protected $_hits = 0;
-
-  /**
-   * Cached field names	
-   * @var array
-   */
-  protected $_fields = array();
-
-  /**
-   * Key prefix to avoid collisions
-   * @var string 
-   */
-  protected $_prefix;
 
   /**
    * Server ip

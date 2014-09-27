@@ -7,10 +7,35 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.0
+ * @version 1.0.1
  */
 abstract class Service {
-
+  
+  /**
+   * Cached field names
+   * 	 	
+   * @var array
+   */
+  protected $_fields = array();
+  
+  /**
+   * Number of hits
+   * @var int
+   */
+  protected $_hits = 0;
+  
+  /**
+   * Cache service Object
+   * @var object
+   */
+  protected $_service;
+  
+  /**
+   * Info method
+   * @var string 
+   */
+  protected $_info_method = 'info';
+  
   /**
    * Retrieves the content of $name cache
    * 	 

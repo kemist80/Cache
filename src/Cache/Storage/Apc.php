@@ -7,39 +7,9 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.4
+ * @version 1.0.5
  */
 class Apc extends Service implements StorageInterface {
-
-  /**
-   * Number of hits
-   * @var int
-   */
-  protected $_hits = 0;
-
-  /**
-   * Cached field names
-   * @var array
-   */
-  protected $_fields = array();
-
-  /**
-   * Key prefix to avoid collisions
-   * @var string 
-   */
-  protected $_prefix = '';
-
-  /**
-   * APC Object
-   * @var ApcObject 
-   */
-  protected $_service;
-
-  /**
-   * Info method
-   * @var string 
-   */
-  protected $_info_method = 'info';
 
   /**
    * Constructor

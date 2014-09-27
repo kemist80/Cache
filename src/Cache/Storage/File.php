@@ -7,23 +7,9 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.5
+ * @version 1.0.6
  */
 class File extends Service implements StorageInterface {
-
-  /**
-   * Number of hits
-   * 	 	
-   * @var int
-   */
-  protected $_hits = 0;
-
-  /**
-   * Cached field names
-   * 	 	
-   * @var array
-   */
-  protected $_fields = array();
 
   /**
    * Cache file extension
