@@ -40,7 +40,7 @@ abstract class Service {
    * Key prefix to avoid collisions
    * @var string 
    */
-  protected $_prefix;
+  protected $_prefix='';
   
   /**
    * Retrieves the content of $name cache
