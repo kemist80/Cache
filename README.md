@@ -47,7 +47,7 @@ if ($cache->exist('variable')){
 // Deletes a variable from cache
 $cache->delete('variable');
 
-// Reads back a variable passing a default value in case it not exists
+// Reads back a variable passing a default value in case it doesn't exist
 echo $cache->get('variable','default value');
 
 // Deletes all cached variables
@@ -95,7 +95,7 @@ var_dump($cache->get('test.array'));
 ```
 Default value:
 ```php
-// Get can return a default value if cached variable not exists
+// Get can return a default value if cached variable doesn't exist
 echo $cache->get('test.default','default');
 
 // You can pass even a closure
