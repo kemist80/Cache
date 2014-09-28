@@ -77,7 +77,8 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist('_system.info')) {
-      $this->_info=(is_array($this->get('_system.info')) ? $this->get('_system.info') : array());
+      $info = $this->get('_system.info');
+      $this->_info=(is_array($info) ? $info : array());
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
