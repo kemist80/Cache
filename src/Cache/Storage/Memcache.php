@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.9
+ * @version 1.0.10
  */
 class Memcache extends Service implements StorageInterface {
 
@@ -64,21 +64,6 @@ class Memcache extends Service implements StorageInterface {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Deletes the specified cache or each one if '' given
-   * 	 
-   * @param string $name cache name
-   *
-   * @return bool
-   */
-  public function clear($name = '') {
-    if ($name == '') {
-      return $this->_service->flush();
-    } else {
-      return $this->_service->delete($this->_prefix . $name);
-    }
   }
 
   /**

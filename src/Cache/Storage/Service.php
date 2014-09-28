@@ -59,6 +59,21 @@ abstract class Service {
 
     return $ret;
   }
+  
+  /**
+   * Deletes the specified cache or each one if '' given
+   * 	 
+   * @param string $name cache name
+   *
+   * @return bool
+   */
+  public function clear($name = '') {
+    if ($name == '') {
+      return $this->_service->flush();
+    } else {
+      return $this->_service->delete($this->_prefix . $name);
+    }
+  }
 
   /**
    * Retrieves information of Cache state

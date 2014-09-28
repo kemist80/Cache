@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.6
+ * @version 1.0.7
  */
 class Apc extends Service implements StorageInterface {
 
@@ -44,21 +44,6 @@ class Apc extends Service implements StorageInterface {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Deletes the specified cache or each one if '' given
-   * 	 
-   * @param string $name cache name
-   *
-   * @return bool
-   */
-  public function clear($name = '') {
-    if ($name == '') {
-      return $this->_service->flush();
-    } else {
-      return $this->_service->clear($this->_prefix . $name);
-    }
   }
 
   /**

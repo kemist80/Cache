@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  *
  * @package Kemist\Cache
  * 
- * @version 1.0.0
+ * @version 1.0.1
  */
 class ApcObject {
 
@@ -38,7 +38,7 @@ class ApcObject {
    * 
    * @return bool
    */
-  public function clear($name) {
+  public function delete($name) {
     return apc_delete($name);
   }
 
