@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.7
+ * @version 1.0.8
  */
 class File extends Service implements StorageInterface {
 
@@ -86,19 +86,10 @@ class File extends Service implements StorageInterface {
    */
   public function clear($name = '') {
     if ($name == '') {
-      if ($dir = opendir($this->_cache_dir)) {
-        while (false !== ($file = readdir($dir))) {
-          if (
-                  $file != "." &&
-                  $file != ".." &&
-                  $file != '.htaccess'
-          ) {
-            unlink($this->_cache_dir . $file);
-          }
-        }
-        closedir($dir);
-        return false;
+      foreach ($this->_getAllCacheFiles() as $file) {
+        unlink($this->_cache_dir . $file);        
       }
+      return true;
     } elseif (file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension)) {
       unlink($this->_cache_dir . '.' . $name . '.' . $this->_extension);
       return true;
@@ -119,11 +110,9 @@ class File extends Service implements StorageInterface {
   public function put($name, $val, $compressed = false) {
     $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb');
     if ($f) {
-      $success = true;
       $ret = false;
-      if ($this->_file_locking) {
-        $success = flock($f, LOCK_EX);
-      }
+      $success = $this->_file_locking ? flock($f, LOCK_EX) : true;
+      
       if ($success) {
         $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));
         $ret ? $this->_storeName($name) : null;
@@ -155,13 +144,8 @@ class File extends Service implements StorageInterface {
       return false;
     }
 
-    $f = fopen($filename, "rb");
-    if ($f) {
-      $success = true;
-      if ($this->_file_locking) {
-        $success = flock($f, LOCK_SH);
-      }
-
+    if (false !== $f=fopen($filename, "rb")) {
+      $success = $this->_file_locking ? flock($f, LOCK_SH) : true;      
       $temp = '';
       while ($success && !feof($f)) {
         $temp .= fread($f, 8192);
@@ -190,22 +174,13 @@ class File extends Service implements StorageInterface {
     $ret['CACHE_TYPE'] = 'File';
     $ret['CACHE_HITS'] = $this->_hits;
     $fields = array();
-
-    if ($dir = opendir($this->_cache_dir)) {
-      while (false !== ($file = readdir($dir))) {
-        if (
-                $file != "." &&
-                $file != ".." &&
-                $file != '.htaccess'
-        ) {
-          $name = basename($file, '.' . $this->_extension);
-          $ret[$name]['size'] = filesize(($this->_cache_dir . $file));
-          $ret[$name]['last_modified'] = date('Y.m.d. H:i:s', filemtime($this->_cache_dir . $file));
-          $ret[$name]['last_accessed'] = date('Y.m.d. H:i:s', fileatime($this->_cache_dir . $file));
-          $fields[] = $name;
-        }
-      }
-      closedir($dir);
+    
+    foreach ($this->_getAllCacheFiles() as $file) {
+      $name = basename($file, '.' . $this->_extension);
+      $ret[$name]['size'] = filesize(($this->_cache_dir . $file));
+      $ret[$name]['last_modified'] = date('Y.m.d. H:i:s', filemtime($this->_cache_dir . $file));
+      $ret[$name]['last_accessed'] = date('Y.m.d. H:i:s', fileatime($this->_cache_dir . $file));
+      $fields[] = $name;      
     }
 
     if ($get_fields) {
@@ -216,6 +191,22 @@ class File extends Service implements StorageInterface {
     }
 
     return $ret;
+  }
+  
+  /**
+   * Gets all cache files
+   * 
+   * @return array
+   */
+  protected function _getAllCacheFiles(){
+    $files=array();
+    foreach (scandir($this->_cache_dir) as $file) {
+      $temp = explode('.', $file);
+      if (array_pop($temp) == $this->_extension) {
+        $files[]=$file;
+      }
+    }
+    return $files;
   }
 
 }

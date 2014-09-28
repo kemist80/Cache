@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.7
+ * @version 1.0.8
  */
 class Manager {
 
@@ -77,20 +77,15 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist('_system.info')) {
-      $info = $this->get('_system.info');
-      $this->_info = (is_array($info) ? $info : array());
+      $this->_info = $this->get('_system.info') ?: array();
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
-        }
-        if ((time() > $data['expiry'] && $this->exist($key)) ||
-                strlen($data['store_method']) == 0
-        ) {
-          $this->clear($key);
-        }
-        if (!$this->exist($key)) {
+        }elseif (!$this->exist($key)) {
           unset($this->_info[$key]);
-        }
+        }elseif (time() > $data['expiry']) {
+          $this->clear($key);
+        }        
       }
     }
     $this->_initialised = 1;
@@ -159,14 +154,12 @@ class Manager {
     $secret = ($name != '' ? $this->_encryptKey($name) : $name);
     $ret = $this->_storage->clear($secret);
 
-    if (isset($this->_info[$name])) {
-      unset($this->_info[$name]);
-    }
-
     if ($name == '') {
       $this->_info = array();
+    }elseif (isset($this->_info[$name])) {
+      unset($this->_info[$name]);
     }
-
+    
     return $ret;
   }
 
@@ -209,33 +202,26 @@ class Manager {
     $this->init();
     $secret = $this->_encryptKey($name);
     $data = $this->_encode($val, $store_method);
-    $ret = $this->_storage->put($secret, $data, $compressed);
+    if (false !== $ret = $this->_storage->put($secret, $data, $compressed)){
+      $read_count = (isset($this->_info[$name]['read_count']) ? $this->_info[$name]['read_count'] : 0);
+      $write_count = (isset($this->_info[$name]['write_count']) ? $this->_info[$name]['write_count'] : 0);
+      $created = (isset($this->_info[$name]['created']) ? $this->_info[$name]['created'] : time());
+      $last_read = (isset($this->_info[$name]['last_read']) ? $this->_info[$name]['last_read'] : null);
+      $expiry = ($expiry == 'never' ? 0 : $this->_extractExpiryDate($expiry));
 
-    $read_count = (isset($this->_info[$name]['read_count']) ? $this->_info[$name]['read_count'] : 0);
-    $write_count = (isset($this->_info[$name]['write_count']) ? $this->_info[$name]['write_count'] : 0);
-    $created = (isset($this->_info[$name]['created']) ? $this->_info[$name]['created'] : time());
-    $last_read = (isset($this->_info[$name]['last_read']) ? $this->_info[$name]['last_read'] : null);
-
-    if (is_string($expiry)) {
-      $expiry = $this->_extractExpiryDate($expiry);
-    } elseif ((int) $expiry > 0) {
-      $expiry = ($expiry < time() ? time() + $expiry : $expiry);
-    } else {
-      $expiry = 0;
+      $this->_info[$name] = array(
+          'expiry' => $expiry,
+          'size' => strlen($data),
+          'compressed' => $compressed,
+          'store_method' => $store_method,
+          'created' => $created,
+          'last_access' => time(),
+          'last_read' => $last_read,
+          'last_write' => time(),
+          'read_count' => $read_count,
+          'write_count' => ++$write_count
+      );
     }
-
-    $this->_info[$name] = array(
-        'expiry' => $expiry,
-        'size' => strlen($data),
-        'compressed' => $compressed,
-        'store_method' => $store_method,
-        'created' => $created,
-        'last_access' => time(),
-        'last_read' => $last_read,
-        'last_write' => time(),
-        'read_count' => $read_count,
-        'write_count' => ++$write_count
-    );
 
     return $ret;
   }
@@ -243,21 +229,24 @@ class Manager {
   /**
    * Extracts expiry by string
    * 
-   * @param string $expiry
+   * @param mixed $expiry
    * 
    * @return int
    */
   protected function _extractExpiryDate($expiry) {
-    if ($expiry == 'never') {
-      return 0;
+    if (is_string($expiry)) {      
+      if (strtotime($expiry) === false) {
+        throw new \InvalidArgumentException('Invalid date format!');
+      }
+      $date = new \DateTime($expiry);
+      $expiry=$date->format('U') < time() ? 0 : $date->format('U');
+    } elseif ((int) $expiry > 0) {
+      $expiry = ($expiry < time() ? time() + $expiry : $expiry);
+    } else {
+      $expiry = 0;
     }
-
-    if (strtotime($expiry) === false) {
-      throw new \InvalidArgumentException('Invalid date format!');
-    }
-
-    $date = new \DateTime($expiry);
-    return $date->format('U') < time() ? 0 : $date->format('U');
+    
+    return $expiry;
   }
 
   /**
