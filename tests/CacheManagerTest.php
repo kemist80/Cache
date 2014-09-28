@@ -274,6 +274,15 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($last_access, $time);
   }
   
+  public function testGetHits() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->once())
+            ->method('getHits')
+            ->will($this->returnValue(3))
+    ;
+    $cache = new Manager($storage);
+    $this->assertEquals($cache->getHits(), 3);
+  }
 
   public function testGetKeys() {
     $storage = $this->_getStorage();
