@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.8
+ * @version 1.0.9
  */
 class Manager {
 
@@ -77,7 +77,8 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist('_system.info')) {
-      $this->_info = $this->get('_system.info') ?: array();
+      $info = $this->get('_system.info');
+      $this->_info=(is_array($info) ? $info : array());
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
