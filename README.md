@@ -101,7 +101,7 @@ echo $cache->get('test.default','default');
 // You can pass even a closure
 echo $cache->get('test.default',function(){return 'default';});
 
-// Initial value setting (store default value if not exists)
+// Initial value setting (store default value if cached variable doesn't exist)
 echo $cache->getOrPut('test.initial','initial',false,'3hours');
 
 // The same with closure
