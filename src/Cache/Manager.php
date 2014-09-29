@@ -77,7 +77,7 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist('_system.info')) {
-      $this->_info=$this->getOrPut('_system.info',array());
+      $this->_info=(array)$this->getOrPut('_system.info',array());
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
@@ -300,7 +300,6 @@ class Manager {
 
     $this->_info[$name]['last_access'] = time();
     $this->_info[$name]['last_read'] = time();
-
     $this->_info[$name]['read_count'] = (isset($this->_info[$name]['read_count']) ? ++$this->_info[$name]['read_count'] : 1);
 
     if ($ret !== null) {
