@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.8
+ * @version 1.0.9
  */
 class File extends Service implements StorageInterface {
 
@@ -62,7 +62,6 @@ class File extends Service implements StorageInterface {
     if (!is_writable($this->_cache_dir)) {
       throw new \Kemist\Cache\Exception("Cache directory is not writable!");
     }
-
     return true;
   }
 
@@ -109,23 +108,19 @@ class File extends Service implements StorageInterface {
    */
   public function put($name, $val, $compressed = false) {
     $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb');
-    if ($f) {
-      $ret = false;
-      $success = $this->_file_locking ? flock($f, LOCK_EX) : true;
-      
-      if ($success) {
+    $ret = false;
+    if ($f) {      
+      if (false !== $success = $this->_lockFile($f,true)) {
         $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));
         $ret ? $this->_storeName($name) : null;
+        $this->_unlockFile($f, $success);
       }
 
-      if ($this->_file_locking && $success) {
-        flock($f, LOCK_UN);
-      }
       fclose($f);
-      return ($ret && $success);
+      $ret&=$success;
     }
 
-    return false;
+    return $ret;
   }
 
   /**
@@ -145,14 +140,12 @@ class File extends Service implements StorageInterface {
     }
 
     if (false !== $f=fopen($filename, "rb")) {
-      $success = $this->_file_locking ? flock($f, LOCK_SH) : true;      
+      $success = $this->_lockFile($f);
       $temp = '';
       while ($success && !feof($f)) {
         $temp .= fread($f, 8192);
       }
-      if ($this->_file_locking && $success) {
-        flock($f, LOCK_UN);
-      }
+      $this->_unlockFile($f, $success);
       fclose($f);
       $this->_hits++;
       $ret = ($compressed ? gzuncompress($temp) : $temp);
@@ -160,6 +153,36 @@ class File extends Service implements StorageInterface {
     }
 
     return $ret;
+  }
+  
+  /**
+   * Locks file
+   * 
+   * @param resource $f
+   * @param bool $write
+   * 
+   * @return bool
+   */
+  protected function _lockFile($f,$write=false){
+    if (!$this->_file_locking){
+      return true;
+    }
+    return ($write ? flock($f, LOCK_EX) : flock($f, LOCK_SH));
+  }
+  
+  /**
+   * Unlocks file
+   * 
+   * @param resource $f
+   * @param bool $locked
+   * 
+   * @return bool
+   */
+  protected function _unlockFile($f, $locked) {    
+    if (!$this->_file_locking || !$locked){
+      return true;
+    }
+    return flock($f, LOCK_UN);
   }
 
   /**
