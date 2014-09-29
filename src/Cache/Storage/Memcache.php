@@ -7,9 +7,9 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.10
+ * @version 1.0.11
  */
-class Memcache extends Service implements StorageInterface {
+class Memcache extends StorageAbstract implements StorageInterface {
 
   /**
    * Server ip
@@ -38,7 +38,7 @@ class Memcache extends Service implements StorageInterface {
     $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
     $this->_server = (isset($options['server']) ? $options['server'] : '127.0.0.1');
     $this->_port = (isset($options['port']) ? $options['port'] : 11211);
-    $this->_service = $memcache;
+    $this->_provider = $memcache;
   }
 
   /**
@@ -49,7 +49,7 @@ class Memcache extends Service implements StorageInterface {
    * @throws \Kemist\Cache\Exception
    */
   public function init() {
-    return $this->_service->connect($this->_server, $this->_port);
+    return $this->_provider->connect($this->_server, $this->_port);
   }
 
   /**
@@ -60,7 +60,7 @@ class Memcache extends Service implements StorageInterface {
    * @return bool
    */
   public function exist($name) {
-    if ($this->_service->get($this->_prefix . $name)) {
+    if ($this->_provider->get($this->_prefix . $name)) {
       return true;
     }
     return false;
@@ -78,10 +78,10 @@ class Memcache extends Service implements StorageInterface {
   public function put($name, $val, $compressed = false) {
     $real_name = $this->_prefix . $name;
     $ret = true;
-    if ($compressed && $this->_service->replace($real_name, $val, 2) == false) {
-      $ret = $this->_service->set($real_name, $val, 2);
-    } elseif ($this->_service->replace($real_name, $val) == false) {
-      $ret = $this->_service->set($real_name, $val);
+    if ($compressed && $this->_provider->replace($real_name, $val, 2) == false) {
+      $ret = $this->_provider->set($real_name, $val, 2);
+    } elseif ($this->_provider->replace($real_name, $val) == false) {
+      $ret = $this->_provider->set($real_name, $val);
     }
     $ret ? $this->_storeName($name) : null;
     return $ret;
@@ -93,7 +93,7 @@ class Memcache extends Service implements StorageInterface {
    * @return type
    */
   public function __destruct() {
-    return is_object($this->_service) ? $this->_service->close() : null;
+    return is_object($this->_provider) ? $this->_provider->close() : null;
   }
 
 }

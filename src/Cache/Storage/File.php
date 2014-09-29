@@ -9,7 +9,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @version 1.0.9
  */
-class File extends Service implements StorageInterface {
+class File extends StorageAbstract implements StorageInterface {
 
   /**
    * Cache file extension

@@ -3,13 +3,13 @@
 namespace Kemist\Cache\Storage;
 
 /**
- * Abstract Service
+ * StorageAbstract class
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.2
+ * @version 1.0.3
  */
-abstract class Service {
+abstract class StorageAbstract {
 
   /**
    * Cached field names
@@ -25,10 +25,10 @@ abstract class Service {
   protected $_hits = 0;
 
   /**
-   * Cache service Object
+   * Cache provider Object
    * @var object
    */
-  protected $_service;
+  protected $_provider;
 
   /**
    * Info method
@@ -51,7 +51,7 @@ abstract class Service {
    * @return mixed
    */
   public function get($name, $compressed = false) {
-    $ret = $this->_service->get($this->_prefix . $name);
+    $ret = $this->_provider->get($this->_prefix . $name);
     if ($ret !== false) {
       $this->_hits++;
       $this->_storeName($name);
@@ -69,9 +69,9 @@ abstract class Service {
    */
   public function clear($name = '') {
     if ($name == '') {
-      return $this->_service->flush();
+      return $this->_provider->flush();
     } else {
-      return $this->_service->delete($this->_prefix . $name);
+      return $this->_provider->delete($this->_prefix . $name);
     }
   }
 
@@ -88,7 +88,7 @@ abstract class Service {
     $ret['CACHE_TYPE'] = end($classname);
     $ret['CACHE_HITS'] = $this->_hits;
 
-    $ret = array_merge($ret, call_user_func(array($this->_service, $this->_info_method)));
+    $ret = array_merge($ret, call_user_func(array($this->_provider, $this->_info_method)));
 
     if ($get_fields) {
       foreach ($this->_fields as $field) {

@@ -3,7 +3,7 @@
 namespace Kemist\Cache\Storage;
 
 /**
- * Description of ApcObject
+ * ApcObject
  *
  * @package Kemist\Cache
  * 
