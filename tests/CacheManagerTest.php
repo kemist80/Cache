@@ -15,7 +15,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
 
   public function testInit() {
     $storage = $this->_getStorage();
-    $storage->expects($this->once())
+    $storage->expects($this->any())
             ->method('exist')
             ->will($this->returnValue(true))
     ;
@@ -65,7 +65,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(false)))
     ;
     $cache = new Manager($storage);
-    $cache->put('false_test',false);    
+    $cache->put('false_test', false);
     $var = $cache->get('false_test');
     $this->assertFalse($var);
   }
@@ -121,7 +121,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $exp);
   }
-  
+
   public function testNeverExpires() {
     $storage = $this->_getStorage();
 
@@ -130,51 +130,51 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, 0);
   }
-  
+
   public function testExpiryFullTimestamp() {
     $storage = $this->_getStorage();
 
     $cache = new Manager($storage);
-    $timestamp=time()+86400;
+    $timestamp = time() + 86400;
     $cache->put('test_variable', 1, false, $timestamp);
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $timestamp);
   }
-  
+
   public function testExpiryRelativeOneHour() {
     $storage = $this->_getStorage();
 
     $cache = new Manager($storage);
-    $timestamp=time()+3600;
+    $timestamp = time() + 3600;
     $cache->put('test_variable', 1, false, '1hour');
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $timestamp);
   }
-  
+
   public function testExpiryRelativeTwoDays() {
     $storage = $this->_getStorage();
 
     $cache = new Manager($storage);
-    $timestamp=time()+(86400*2);
+    $timestamp = time() + (86400 * 2);
     $cache->put('test_variable', 1, false, '2days');
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $timestamp);
   }
-  
+
   public function testExpiryInvalidDateString() {
     $storage = $this->_getStorage();
 
     $cache = new Manager($storage);
-    $ret=true;
-    try{
+    $ret = true;
+    try {
       $cache->put('test_variable', 1, false, 'iNvAlId DaTeStRiNg');
     } catch (\InvalidArgumentException $ex) {
-      $ret=false;
+      $ret = false;
     }
-    
+
     $this->assertFalse($ret);
   }
-  
+
   public function testExpiryInPast() {
     $storage = $this->_getStorage();
 
@@ -221,7 +221,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache->put('test_variable', 1);
     sleep(1);
     $cache->put('test_variable', 1);
-    
+
     $created = $cache->getCreated('test_variable');
     $this->assertEquals($created, $time);
   }
@@ -241,7 +241,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $last_access = $cache->getLastAccess('test_variable');
     $this->assertEquals($last_access, $time);
   }
-  
+
   public function testLastRead() {
     $storage = $this->_getStorage();
     $storage->expects($this->any())
@@ -257,7 +257,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $last_access = $cache->getLastRead('test_variable');
     $this->assertEquals($last_access, $time);
   }
-  
+
   public function testLastWrite() {
     $storage = $this->_getStorage();
     $storage->expects($this->any())
@@ -268,12 +268,22 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache->put('test_variable', 1);
     sleep(1);
     $time = time();
-    $cache->put('test_variable',2);
+    $cache->put('test_variable', 2);
 
     $last_access = $cache->getLastWrite('test_variable');
     $this->assertEquals($last_access, $time);
   }
-  
+
+  public function testInfo() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->once())
+            ->method('info')
+            ->will($this->returnValue(array()))
+    ;
+    $cache = new Manager($storage);
+    $this->assertEquals($cache->info(), array());
+  }
+
   public function testGetHits() {
     $storage = $this->_getStorage();
     $storage->expects($this->once())
@@ -332,8 +342,8 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
   public function testDisabledExist() {
     $storage = $this->_getStorage();
     $storage->expects($this->any())
-            ->method('exist')
-            ->will($this->returnValue(true))
+            ->method('get')
+            ->will($this->returnValue(array()))
     ;
     $cache = new Manager($storage);
     $cache->init();
@@ -351,6 +361,18 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache->init();
     $cache->setEnabled(false);
     $this->assertNull($cache->get('_system.info'));
+  }
+
+  public function testDisabledCreated() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('get')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $cache->setEnabled(false);
+    $this->assertFalse($cache->getCreated('_system.info'));
   }
 
   public function testDisabledPut() {
@@ -461,28 +483,30 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $last_access = $cache->getLastAccess('test_variable2');
     $this->assertFalse($last_access);
   }
-  
-  public function testDefaultValue(){
+
+  public function testDefaultValue() {
     $storage = $this->_getStorage();
     $cache = new Manager($storage);
-    $default=$cache->get('test_variable','default');
-    $this->assertEquals($default,'default');
+    $default = $cache->get('test_variable', 'default');
+    $this->assertEquals($default, 'default');
   }
-  
-  public function testDefaultClosure(){
+
+  public function testDefaultClosure() {
     $storage = $this->_getStorage();
     $cache = new Manager($storage);
-    $default=$cache->get('test_variable',function(){ return 'default'; });
-    $this->assertEquals($default,'default');
+    $default = $cache->get('test_variable', function() {
+      return 'default';
+    });
+    $this->assertEquals($default, 'default');
   }
-  
-  public function testGetOrPut(){
+
+  public function testGetOrPut() {
     $storage = $this->_getStorage();
     $cache = new Manager($storage);
-    $default=$cache->getOrPut('test_variable','default');
-    $this->assertEquals($default,'default');
-    $info=$cache->getInfo();    
-    $this->assertArrayHasKey('test_variable',$info);
+    $default = $cache->getOrPut('test_variable', 'default');
+    $this->assertEquals($default, 'default');
+    $info = $cache->getInfo();
+    $this->assertArrayHasKey('test_variable', $info);
   }
 
 }

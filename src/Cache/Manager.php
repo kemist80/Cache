@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.9
+ * @version 1.0.10
  */
 class Manager {
 
@@ -77,8 +77,7 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist('_system.info')) {
-      $info = $this->get('_system.info');
-      $this->_info=(is_array($info) ? $info : array());
+      $this->_info=$this->getOrPut('_system.info',array());
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
@@ -459,6 +458,9 @@ class Manager {
    * @return string
    */
   public function getExpiry($name, $format = 'U') {
+    if (!$this->isEnabled()) {
+      return false;
+    }
     $this->init();
     if (!isset($this->_info[$name])) {
       return false;
@@ -525,17 +527,19 @@ class Manager {
    * @return string|int
    */
   protected function _getInfoItem($name, $param_name, $type = 'int', $format = 'U') {
+    if (!$this->isEnabled()) {
+      return false;
+    }
     $this->init();
     if (!isset($this->_info[$name])) {
       return false;
     }
-    switch ($type) {
-      case 'int':
-        return isset($this->_info[$name][$param_name]) ? (int) $this->_info[$name][$param_name] : 0;
+    switch ($type) {      
       case 'date':
         return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
+      case 'int':
       default:
-        return null;
+        return isset($this->_info[$name][$param_name]) ? (int) $this->_info[$name][$param_name] : 0;
     }
   }
 
@@ -567,6 +571,9 @@ class Manager {
    * @return array
    */
   public function getKeys() {
+    if (!$this->isEnabled()) {
+      return false;
+    }
     $this->init();
     return array_keys($this->_info);
   }
