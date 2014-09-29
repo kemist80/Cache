@@ -111,7 +111,8 @@ echo $cache->getOrPut('test.initial',function(){return 'default';},false,'3hours
 ```
 Cached variable statistics:
 ```php
-// Displays cache creation time (first stored) in specified date format (by default it is returned as unix timestamp)
+// Displays cache creation time (first stored) in specified date format 
+// (by default it returns a unix timestamp)
 echo 'Created:'.$cache->getCreated('test.compressed','Y-m-d H:i:s');
 
 // Displays cache expiry in specified date format
