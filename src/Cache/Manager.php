@@ -359,7 +359,7 @@ class Manager {
    * 
    * @param bool $get_fields
    * 	 
-   * @return array
+   * @return array|bool
    */
   public function info($get_fields = false) {
     if (!$this->isEnabled()) {
@@ -523,7 +523,7 @@ class Manager {
    * @param string $type
    * @param string $format
    * 
-   * @return string|int
+   * @return string|int|bool
    */
   protected function _getInfoItem($name, $param_name, $type = 'int', $format = 'U') {
     if (!$this->isEnabled()) {
