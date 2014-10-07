@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.10
+ * @version 1.0.11
  */
 class Manager {
 
@@ -202,25 +202,24 @@ class Manager {
     $this->init();
     $secret = $this->_encryptKey($name);
     $data = $this->_encode($val, $store_method);
-    if (false !== $ret = $this->_storage->put($secret, $data, $compressed)){
-      $read_count = (isset($this->_info[$name]['read_count']) ? $this->_info[$name]['read_count'] : 0);
-      $write_count = (isset($this->_info[$name]['write_count']) ? $this->_info[$name]['write_count'] : 0);
-      $created = (isset($this->_info[$name]['created']) ? $this->_info[$name]['created'] : time());
-      $last_read = (isset($this->_info[$name]['last_read']) ? $this->_info[$name]['last_read'] : null);
+    if (false !== $ret = $this->_storage->put($secret, $data, $compressed)){            
       $expiry = ($expiry == 'never' ? 0 : $this->_extractExpiryDate($expiry));
-
-      $this->_info[$name] = array(
-          'expiry' => $expiry,
-          'size' => strlen($data),
-          'compressed' => $compressed,
-          'store_method' => $store_method,
-          'created' => $created,
-          'last_access' => time(),
-          'last_read' => $last_read,
-          'last_write' => time(),
-          'read_count' => $read_count,
-          'write_count' => ++$write_count
-      );
+      
+      if (!isset($this->_info[$name])){
+          $this->_info[$name] = array(
+            'created' => time(),
+            'last_read' => null,
+            'read_count' => 0
+        );
+      }
+                
+      $this->_touchInfoItem($name, array('last_access','last_write'));
+      $this->_info[$name]['expiry'] = $expiry;
+      $this->_info[$name]['size'] = strlen($data);
+      $this->_info[$name]['compressed'] = $compressed;
+      $this->_info[$name]['store_method'] = $store_method;
+      $this->_increaseInfoItem($name, 'write_count');
+      
     }
 
     return $ret;
@@ -298,9 +297,8 @@ class Manager {
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
 
-    $this->_info[$name]['last_access'] = time();
-    $this->_info[$name]['last_read'] = time();
-    $this->_info[$name]['read_count'] = (isset($this->_info[$name]['read_count']) ? ++$this->_info[$name]['read_count'] : 1);
+    $this->_touchInfoItem($name, array('last_access','last_read'));
+    $this->_increaseInfoItem($name, 'read_count');
 
     if ($ret !== null) {
       $this->_read_keys[] = $name;
@@ -516,16 +514,16 @@ class Manager {
   }
 
   /**
-   * Gets a parameter from cache info
+   * Gets an item from cache info
    * 
    * @param string $name
-   * @param string $param_name
+   * @param string $item_name
    * @param string $type
    * @param string $format
    * 
    * @return string|int|bool
    */
-  protected function _getInfoItem($name, $param_name, $type = 'int', $format = 'U') {
+  protected function _getInfoItem($name, $item_name, $type = 'int', $format = 'U') {
     if (!$this->isEnabled()) {
       return false;
     }
@@ -535,10 +533,32 @@ class Manager {
     }
     switch ($type) {      
       case 'date':
-        return isset($this->_info[$name][$param_name]) ? date($format, $this->_info[$name][$param_name]) : null;
+        return isset($this->_info[$name][$item_name]) ? date($format, $this->_info[$name][$item_name]) : null;
       case 'int':
       default:
-        return isset($this->_info[$name][$param_name]) ? (int) $this->_info[$name][$param_name] : 0;
+        return isset($this->_info[$name][$item_name]) ? (int) $this->_info[$name][$item_name] : 0;
+    }
+  }
+  
+  /**
+   * Inreases an item in cache info
+   * 
+   * @param string $name
+   * @param string $item_name
+   */
+  protected function _increaseInfoItem($name,$item_name){
+    $this->_info[$name][$item_name] = (isset($this->_info[$name][$item_name]) && is_int($this->_info[$name][$item_name]) ? ++$this->_info[$name][$item_name] : 1);
+  }
+  
+  /**
+   * Updates timestamp items in cache info
+   * 
+   * @param string $name
+   * @param array $item_names
+   */
+  protected function _touchInfoItem($name,$item_names=array()){
+    foreach ($item_names as $item_name){
+      $this->_info[$name][$item_name] = time();
     }
   }
 
