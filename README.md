@@ -6,7 +6,15 @@
 [![Latest Stable Version](https://poser.pugx.org/kemist/cache/v/stable.svg)](https://packagist.org/packages/kemist/cache)
 [![License](https://poser.pugx.org/kemist/cache/license.svg)](https://packagist.org/packages/kemist/cache)
 
-Simple caching library with extensible storage interface and automatic expiration handling even if cache storage doesn't support it.
+
+Caching library with the following features:
+- Extensible storage interface
+- Automatic expiration handling even if cache storage doesn't support it
+- Remembers when each cached item was read/written/accessed last time or written for the first time (created).
+- Counts how many times a cached item was read/written since creation
+- Counts cache hits (number of succesful  retrieving)
+- Supports compressed storing 
+
 
 ## Installation
 
