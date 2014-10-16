@@ -464,6 +464,52 @@ class Manager {
     }
     return isset($this->_info[$name]['expiry']) ? ($this->_info[$name]['expiry'] == 0 ? 0 : date($format, $this->_info[$name]['expiry'])) : null;
   }
+  
+  /**
+   * Calculates Time To Live
+   * 
+   * @param string $name
+   * 
+   * @return int
+   */
+  public function getTTL($name){
+    $expiry=$this->getExpiry($name);
+    return ($expiry > 0 ? (int)$expiry - (int)$this->getCreated($name) : 0);
+  }
+  
+  /**
+   * Modifies expiry by setting Time To Live
+   * 
+   * @param string $name
+   * @param int $ttl
+   */
+  public function setTTL($name, $ttl){   
+    if (!$this->isEnabled()) {
+      return false;
+    }
+    $this->init();
+    if ($this->exist($name)){
+      $created=(int)$this->getCreated($name);
+      $ttl=(int)$ttl;
+      $this->_info[$name]['expiry']=($ttl<=0 ? 0 : $created+$ttl);
+    }
+  }
+  
+  /**
+   * Modifies expiry
+   * 
+   * @param string $name
+   * @param mixed $expiry
+   */
+  public function setExpiry($name, $expiry){ 
+    if (!$this->isEnabled()) {
+      return false;
+    }
+    $this->init();
+    if ($this->exist($name)){
+      $this->_info[$name]['expiry']=$this->_extractExpiryDate($expiry);
+    }
+  }
 
   /**
    * Gets created (first write) time of a cached value
