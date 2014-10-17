@@ -152,6 +152,12 @@ echo 'Write count:'.$cache->getWriteCount('variable');
 // Displays how many times cached value was read since creation
 echo 'Read count:'.$cache->getReadCount('test.compressed');
 
+// Displays cache hits
+echo 'Cache hits:'.$cache->getHits();
+
+// Displays cache misses
+echo 'Cache misses:'.$cache->getMisses();
+
 // You can retrieve all of the above statistics at once
 var_dump($cache->getInfo('test.object'));
 
