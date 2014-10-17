@@ -13,6 +13,7 @@ Caching library with the following features:
 - Remembers when each cached item was read/written/accessed last time or written for the first time (created).
 - Counts how many times a cached item was read/written since creation
 - Counts cache hits (number of succesful  retrieving)
+- Counts cache misses (number of attempts to retrieve not existing or expired cache item)
 - Supports compressed storing 
 
 
@@ -86,6 +87,15 @@ $cache->put('test.concrete_date','test variable',false,'2015-01-01');
 
 // Stores a variable valid for 2 weeks (you can use any valid date string)
 $cache->put('test.two_weeks','test variable',false,'2weeks');
+
+// Gets a cached item TTL (time to live: the difference between expiration and creation time in seconds)
+echo $cache->getTTL('test.five_minutes');
+
+// You can set TTL without modifying cached value
+echo $cache->setTTL('test.manual',300);
+
+// You can do the same with specifying the expiry date
+echo $cache->setExpiry('test.manual','5 minutes');
 
 ```
 Storing method:
