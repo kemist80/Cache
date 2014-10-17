@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.9
+ * @version 1.0.10
  */
 class File extends StorageAbstract implements StorageInterface {
 
@@ -136,6 +136,7 @@ class File extends StorageAbstract implements StorageInterface {
 
     $filename = $this->_cache_dir . '.' . $name . '.' . $this->_extension;
     if (!file_exists($filename)) {
+      $this->Miss();
       return false;
     }
 
@@ -147,7 +148,7 @@ class File extends StorageAbstract implements StorageInterface {
       }
       $this->_unlockFile($f, $success);
       fclose($f);
-      $this->_hits++;
+      $this->hit();
       $ret = ($compressed ? gzuncompress($temp) : $temp);
       $ret ? $this->_storeName($name) : null;
     }
@@ -196,6 +197,7 @@ class File extends StorageAbstract implements StorageInterface {
     $ret = array();
     $ret['CACHE_TYPE'] = 'File';
     $ret['CACHE_HITS'] = $this->_hits;
+    $ret['CACHE_MISSES'] = $this->_misses;
     $fields = array();
     
     foreach ($this->_getAllCacheFiles() as $file) {

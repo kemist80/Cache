@@ -405,12 +405,46 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache->setEnabled(false);
     $this->assertEquals($cache->getHits(), 0);
   }
+  
+  public function testDisabledGetMisses() {
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $cache->setEnabled(false);
+    $this->assertEquals($cache->getMisses(), 0);
+  }
 
   public function testDisabledInfo() {
     $storage = $this->_getStorage();
     $cache = new Manager($storage);
     $cache->setEnabled(false);
     $this->assertFalse($cache->info());
+  }
+  
+  public function testDisabledGetInfo() {
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $cache->setEnabled(false);
+    $this->assertFalse($cache->getInfo());
+  }
+  
+  public function testDisabledGetExpiry() {
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1, false, 86400);
+    $cache->setEnabled(false);
+    $this->assertFalse($cache->getExpiry('test_variable'));
+  }
+  
+  public function testSetExpiry() {
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('exist')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1, false, 86400);
+    $cache->setExpiry('test_variable',0);
+    $this->assertEquals($cache->getExpiry('test_variable'),0);
   }
 
   public function testFlush() {
@@ -427,7 +461,7 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache = new Manager($storage);
     $cache->put('test_variable', 1, false, 86400);
     $expiry = $cache->getExpiry('test_variable2');
-    $this->assertFalse($expiry);
+    $this->assertNull($expiry);
   }
 
   public function testWriteCountNotExisting() {
@@ -507,6 +541,43 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($default, 'default');
     $info = $cache->getInfo();
     $this->assertArrayHasKey('test_variable', $info);
+  }
+  
+  public function testStorage(){
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $storage2=$this->_getStorage();
+    $cache->setStorage($storage2);
+    $this->assertEquals($storage2, $cache->getStorage());
+  }
+  
+  public function testGetTTL(){
+    $storage = $this->_getStorage();
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1, false, 300);
+    $this->assertEquals($cache->getTTL('test_variable'), 300);
+  }
+  
+  public function testSetTTL(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('exist')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->put('test_variable', 1);
+    $cache->setTTL('test_variable', 20);
+    $this->assertEquals($cache->getTTL('test_variable'), 20);
+  }
+  
+  public function testMisses(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->once())
+            ->method('getMisses')
+            ->will($this->returnValue(3))
+    ;
+    $cache = new Manager($storage);
+    $this->assertEquals($cache->getMisses(), 3);
   }
 
 }

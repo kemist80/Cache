@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.3
+ * @version 1.0.4
  */
 abstract class StorageAbstract {
 
@@ -23,6 +23,12 @@ abstract class StorageAbstract {
    * @var int
    */
   protected $_hits = 0;
+  
+  /**
+   * Number of misses
+   * @var int
+   */
+  protected $_misses = 0;  
 
   /**
    * Cache provider Object
@@ -53,11 +59,27 @@ abstract class StorageAbstract {
   public function get($name, $compressed = false) {
     $ret = $this->_provider->get($this->_prefix . $name);
     if ($ret !== false) {
-      $this->_hits++;
+      $this->hit();
       $this->_storeName($name);
+    }else{
+      $this->miss();
     }
 
     return $ret;
+  }
+  
+  /**
+   * Cache miss occured
+   */
+  public function miss(){
+    $this->_misses++;
+  }
+  
+  /**
+   * Cache hit occured
+   */
+  public function hit(){
+    $this->_hits++;
   }
   
   /**
@@ -87,6 +109,7 @@ abstract class StorageAbstract {
     $classname = explode('\\', get_class($this));
     $ret['CACHE_TYPE'] = end($classname);
     $ret['CACHE_HITS'] = $this->_hits;
+    $ret['CACHE_MISSES'] = $this->_misses;
 
     $ret = array_merge($ret, call_user_func(array($this->_provider, $this->_info_method)));
 
@@ -107,6 +130,15 @@ abstract class StorageAbstract {
   public function getHits() {
     return $this->_hits;
   }
+  
+  /**
+   * Retrieves cache misses
+   * 
+   * @return int
+   */
+  public function getMisses() {
+    return $this->_misses;
+  }  
 
   /**
    * Stores cache name

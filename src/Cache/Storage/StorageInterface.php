@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.2
+ * @version 1.0.3
  */
 interface StorageInterface {
 
@@ -24,5 +24,11 @@ interface StorageInterface {
   public function init();
   
   public function getHits();
+  
+  public function getMisses();
+  
+  public function miss();
+  
+  public function hit();
   
 }
