@@ -76,7 +76,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * Updates timestamp items in cache info
    * 
    * @param string $name
-   * @param array $item_names
+   * @param array|string $item_names
    */
   public function touchItem($name, $item_names = array()) {
     if (!is_array($item_names)) {
@@ -105,10 +105,23 @@ class Info implements \ArrayAccess, \IteratorAggregate {
       case 'date':
         return isset($this->_data[$name][$item_name]) ? date($format, $this->_data[$name][$item_name]) : null;
       case 'int':
-        return isset($this->_data[$name][$item_name]) ? (int) $this->_data[$name][$item_name] : 0;
+        return (int)$this->_getItemOrDefault($name, $item_name,0);
       default:
-        return isset($this->_data[$name][$item_name]) ? $this->_data[$name][$item_name] : null;
+        return $this->_getItemOrDefault($name, $item_name);
     }
+  }
+  
+  /**
+   * Gets an item value or default if not exists
+   * 
+   * @param string $name
+   * @param string $item_name
+   * @param mixed $default
+   * 
+   * @return mixed
+   */
+  protected function _getItemOrDefault($name,$item_name,$default=null){
+    return isset($this->_data[$name][$item_name]) ? $this->_data[$name][$item_name] : $default;
   }
   
   /**
