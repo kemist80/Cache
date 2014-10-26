@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.12
+ * @version 1.0.13
  */
 class Manager {
 
@@ -42,6 +42,12 @@ class Manager {
    * @var array 
    */
   protected $_read_keys = array();
+  
+  /**
+   * System reserved info key
+   * @var string 
+   */
+  protected $_info_key='_system.info';
 
   /**
    * Initialised (-1: not yet, 0: in progress, 1: initialised)
@@ -77,8 +83,8 @@ class Manager {
     $this->_initialised = 0;
     $this->_storage->init();
 
-    if ($this->exist('_system.info')) {
-      $this->_info->setData((array) $this->getOrPut('_system.info', array()));
+    if ($this->exist($this->_info_key)) {
+      $this->_info->setData((array) $this->getOrPut($this->_info_key, array()));
       foreach ($this->_info as $key => $data) {
         if (!isset($data['expiry']) || $data['expiry'] == 0) {
           continue;
@@ -141,7 +147,7 @@ class Manager {
 
     $this->init();
     $secret = $this->_encryptKey($name);
-    return ($this->_storage->exist($secret) && ($name == '_system.info' || isset($this->_info[$name])));
+    return ($this->_storage->exist($secret) && ($name == $this->_info_key || isset($this->_info[$name])));
   }
 
   /**
@@ -290,13 +296,13 @@ class Manager {
    * @return mixed
    */
   public function get($name, $default = null) {
-    if (!$this->isEnabled() || ($this->init() && $name != '_system.info' && !isset($this->_info[$name]))) {
+    if (!$this->isEnabled() || ($this->init() && $name != $this->_info_key && !isset($this->_info[$name]))) {
       $this->_storage->miss();
       return ($default instanceof \Closure ? call_user_func($default) : $default);
     }
 
-    $compressed = ($name == '_system.info' ? true : $this->_info->getItem($name, 'compressed'));
-    $store_method = ($name == '_system.info' ? self::STORE_METHOD_JSON : $this->_info->getItem($name, 'store_method'));
+    $compressed = ($name == $this->_info_key ? true : $this->_info->getItem($name, 'compressed'));
+    $store_method = ($name == $this->_info_key ? self::STORE_METHOD_JSON : $this->_info->getItem($name, 'store_method'));
     $secret = $this->_encryptKey($name);
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
@@ -460,7 +466,7 @@ class Manager {
     if (!$this->isEnabled() || $this->_initialised < 1) {
       return false;
     }
-    return $this->put('_system.info', $this->_info->getData(), true, 0, self::STORE_METHOD_JSON);
+    return $this->put($this->_info_key, $this->_info->getData(), true, 0, self::STORE_METHOD_JSON);
   }
 
   /**
