@@ -12,7 +12,7 @@ Caching library with the following features:
 - Automatic expiration handling even if cache storage doesn't support it
 - Remembers when each cached item was read/written/accessed last time or written for the first time (created).
 - Counts how many times a cached item was read/written since creation
-- Counts cache hits (number of succesful  retrieving)
+- Counts cache hits (number of successful  retrieving)
 - Counts cache misses (number of attempts to retrieve not existing or expired cache item)
 - Supports compressed storing 
 
@@ -125,7 +125,7 @@ echo $cache->get('test.default',function(){return 'default';});
 echo $cache->getOrPut('test.initial','initial',false,'3hours');
 
 // The same with closure
-echo $cache->getOrPut('test.initial',function(){return 'default';},false,'3hours');
+echo $cache->getOrPut('test.initial',function(){return 'initial';},false,'3hours');
 
 ```
 Cached variable statistics:
