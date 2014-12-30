@@ -136,7 +136,7 @@ class File extends StorageAbstract implements StorageInterface {
 
     $filename = $this->_cache_dir . '.' . $name . '.' . $this->_extension;
     if (!file_exists($filename)) {
-      $this->Miss();
+      $this->miss();
       return false;
     }
 
