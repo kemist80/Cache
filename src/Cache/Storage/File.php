@@ -175,7 +175,6 @@ class File extends StorageAbstract implements StorageInterface {
    * Unlocks file
    * 
    * @param resource $f
-   * @param bool $locked
    * 
    * @return bool
    */
