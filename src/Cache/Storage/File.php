@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.10
+ * @version 1.0.11
  */
 class File extends StorageAbstract implements StorageInterface {
 
@@ -107,17 +107,16 @@ class File extends StorageAbstract implements StorageInterface {
    * @return bool
    */
   public function put($name, $val, $compressed = false) {
-    $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb');
     $ret = false;
-    if ($f) {      
-      if (false !== $success = $this->_lockFile($f,true)) {
-        $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));
-        $ret ? $this->_storeName($name) : null;
-        $this->_unlockFile($f, $success);
+      
+    if (false !== $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb')) {      
+      if ($this->_lockFile($f,true)) {
+        $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));        
+        $this->_unlockFile($f);
       }
 
       fclose($f);
-      $ret&=$success;
+      $ret ? $this->_storeName($name) : null;
     }
 
     return $ret;
@@ -141,15 +140,16 @@ class File extends StorageAbstract implements StorageInterface {
     }
 
     if (false !== $f=fopen($filename, "rb")) {
-      $success = $this->_lockFile($f);
-      $temp = '';
-      while ($success && !feof($f)) {
-        $temp .= fread($f, 8192);
+      if ($this->_lockFile($f)){
+        $temp = '';
+        while (!feof($f)) {
+          $temp .= fread($f, 8192);
+        }
+        $this->_unlockFile($f);        
+        $this->hit();
+        $ret = ($compressed ? gzuncompress($temp) : $temp);        
       }
-      $this->_unlockFile($f, $success);
       fclose($f);
-      $this->hit();
-      $ret = ($compressed ? gzuncompress($temp) : $temp);
       $ret ? $this->_storeName($name) : null;
     }
 
@@ -179,8 +179,8 @@ class File extends StorageAbstract implements StorageInterface {
    * 
    * @return bool
    */
-  protected function _unlockFile($f, $locked) {    
-    if (!$this->_file_locking || !$locked){
+  protected function _unlockFile($f) {    
+    if (!$this->_file_locking){
       return true;
     }
     return flock($f, LOCK_UN);
