@@ -61,6 +61,9 @@ $cache->delete('variable');
 // Reads back a variable passing a default value in case it doesn't exist
 echo $cache->get('variable','default value');
 
+// Reads back a variable and deletes it from cache
+$var=$cache->pull('variable');
+
 // Deletes all cached variables
 $cache->flush();
 
