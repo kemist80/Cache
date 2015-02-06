@@ -343,7 +343,7 @@ class Manager {
   /**
    * Retrieves and deletes value from cache
    * 
-   * @param string $key
+   * @param string $name
    * 
    * @return mixed
    */
