@@ -339,6 +339,19 @@ class Manager {
     $this->put($name, $value, $compressed, $expiry, $store_method);
     return $value;
   }
+  
+  /**
+   * Retrieves and deletes value from cache
+   * 
+   * @param string $key
+   * 
+   * @return mixed
+   */
+  public function pull($name){
+    $ret=$this->get($name);
+    $this->delete($name);
+    return $ret;
+  }
 
   /**
    * Alias for retrieving the content of $name cache
