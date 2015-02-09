@@ -517,11 +517,7 @@ class Manager {
    * @param int $ttl
    */
   public function setTTL($name, $ttl) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-    $this->init();
-    if ($this->exist($name)) {
+    if ($this->_canModify($name)) {
       $created = (int) $this->getCreated($name);
       $ttl = (int) $ttl;
       $this->_info->setItem($name, 'expiry', ($ttl <= 0 ? 0 : $created + $ttl));
@@ -535,11 +531,7 @@ class Manager {
    * @param mixed $expiry
    */
   public function setExpiry($name, $expiry) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-    $this->init();
-    if ($this->exist($name)) {
+    if ($this->_canModify($name)) {
       $this->_info->setItem($name, 'expiry', $this->_extractExpiryDate($expiry));
     }
   }
@@ -729,7 +721,7 @@ class Manager {
 
     $this->init();
     $this->_prepareTags($tags);
-    $filtered = $this->_info->filterByTags($tags);
+    $filtered = (array)$this->_info->filterByTags($tags);
     $ret = array();
     foreach ($filtered as $key) {
       $ret[$key] = $this->get($key);
@@ -758,20 +750,15 @@ class Manager {
   /**
    * Sets tags of a cached variable
    * 
-   * @param string $key
+   * @param string $name
    * @param array $tags
    * 
    * @return array
    */
-  public function setTags($key, $tags) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-
-    $this->init();
-    if ($this->exist($key)){
+  public function setTags($name, $tags) {
+    if ($this->_canModify($name)){
       $this->_prepareTags($tags);
-      return $this->_info->setItem($key, 'tags', $tags);
+      return $this->_info->setItem($name, 'tags', $tags);
     }
     return false;
   }
@@ -779,21 +766,16 @@ class Manager {
   /**
    * Adds tags for a cached variable
    * 
-   * @param string $key
+   * @param string $name
    * @param array $tags
    * 
    * @return array
    */
-  public function addTags($key, $tags) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-
-    $this->init();
-    if ($this->exist($key)){
+  public function addTags($name, $tags) {
+    if ($this->_canModify($name)){
       $this->_prepareTags($tags);
-      $tags = array_unique(array_merge($this->getTags($key), $tags));
-      return $this->setTags($key, $tags);
+      $tags = array_unique(array_merge($this->getTags($name), $tags));
+      return $this->setTags($name, $tags);
     }
     return false;
   }
@@ -856,6 +838,21 @@ class Manager {
       $tags = array($tags);
     }
     $tags=array_unique($tags);
+  }
+  
+  /**
+   * Checks if cache value info can be modified (cache is enabled and value exists)
+   * 
+   * @param string $name
+   * 
+   * @return boolean
+   */
+  protected function _canModify($name){
+    if (!$this->isEnabled()) {
+      return false;
+    }
+    $this->init();
+    return $this->exist($name);
   }
 
 }
