@@ -579,5 +579,115 @@ class CacheManagerTest extends \PHPUnit_Framework_TestCase {
     $cache = new Manager($storage);
     $this->assertEquals($cache->getMisses(), 3);
   }
+  
+  public function testPutTagged(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $tags=array('test1','test2');
+    $cache->putTagged('tagged','value',$tags);
+    $this->assertEquals($cache->getTags('tagged'), $tags);
+  }
+  
+  public function testPutTaggedString(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $cache->putTagged('tagged','value','test1');
+    $this->assertEquals($cache->getTags('tagged'), array('test1'));
+  }
+  
+  public function testGetTagged(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $tags=array('test1','test2');
+    $cache->putTagged('tagged','value',$tags);
+    $this->assertEquals(array_keys($cache->getTagged($tags)), array('tagged'));
+  }
+  
+  public function testSetTags(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('exist')
+            ->will($this->returnValue(true))
+    ;
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $cache->putTagged('tagged','value',array('test1','test2'));
+    $new_tags=array('test3','test4');
+    $cache->setTags('tagged',$new_tags);
+    $this->assertEquals($cache->getTags('tagged'), $new_tags);
+  }  
+  
+  public function testAddTags(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('exist')
+            ->will($this->returnValue(true))
+    ;
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $cache->putTagged('tagged','value',array('test1','test2'));
+    $cache->addTags('tagged',array('test3','test4'));
+    $this->assertEquals($cache->getTags('tagged'), array('test1','test2','test3','test4'));
+  }    
+  
+  public function testClearTagged(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('exist')
+            ->will($this->returnValue(true))
+    ;
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $storage->expects($this->any())
+            ->method('clear')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $cache->putTagged('tagged','value',array('test1','test2'));
+    $cache->clearTagged('test1');
+    $this->assertEquals($cache->getTagged('test1'), array());
+  }   
 
+  public function testGetAllTags(){
+    $storage = $this->_getStorage();
+    $storage->expects($this->any())
+            ->method('exist')
+            ->will($this->returnValue(true))
+    ;
+    $storage->expects($this->any())
+            ->method('put')
+            ->will($this->returnValue(true))
+    ;
+    $cache = new Manager($storage);
+    $cache->init();
+    $cache->putTagged('tagged1','value1',array('test1','test2'));
+    $cache->putTagged('tagged2','value2',array('test1','test3','test4'));    
+    $this->assertEquals($cache->getAllTags(), array('test1','test2','test3','test4'));
+  }
 }

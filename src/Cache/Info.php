@@ -5,7 +5,7 @@ namespace Kemist\Cache;
 /**
  * Cache Info
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 class Info implements \ArrayAccess, \IteratorAggregate {
 
@@ -173,7 +173,8 @@ class Info implements \ArrayAccess, \IteratorAggregate {
   public function createItem($name) {
     $this->_data[$name] = array(
         'last_read' => null,
-        'read_count' => 0
+        'read_count' => 0,
+        'tags' => array()
     );
     $this->touchItem($name,'created');
   }
@@ -208,5 +209,22 @@ class Info implements \ArrayAccess, \IteratorAggregate {
   public function getExpiry($name, $format = 'U') {
     return isset($this->_data[$name]['expiry']) ? ($this->_data[$name]['expiry'] == 0 ? 0 : date($format, $this->_data[$name]['expiry'])) : null;
   }  
+  
+  /**
+   * Get cache names having the given tags
+   * 
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function filterByTags(array $tags){
+    $ret=array();
+    foreach ($this->_data as $key=>$info){
+      if (count(array_intersect($tags, $info['tags'])) > 0){
+        $ret[]=$key;
+      }      
+    }
+    return $ret;
+  }
 
 }

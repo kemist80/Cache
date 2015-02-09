@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.13
+ * @version 1.0.14
  */
 class Manager {
 
@@ -42,12 +42,12 @@ class Manager {
    * @var array 
    */
   protected $_read_keys = array();
-  
+
   /**
    * System reserved info key
    * @var string 
    */
-  protected $_info_key='_system.info';
+  protected $_info_key = '_system.info';
 
   /**
    * Initialised (-1: not yet, 0: in progress, 1: initialised)
@@ -339,7 +339,7 @@ class Manager {
     $this->put($name, $value, $compressed, $expiry, $store_method);
     return $value;
   }
-  
+
   /**
    * Retrieves and deletes value from cache
    * 
@@ -347,8 +347,8 @@ class Manager {
    * 
    * @return mixed
    */
-  public function pull($name){
-    $ret=$this->get($name);
+  public function pull($name) {
+    $ret = $this->get($name);
     $this->delete($name);
     return $ret;
   }
@@ -677,6 +677,179 @@ class Manager {
    */
   public function __destruct() {
     $this->writeExpirals();
+  }
+
+  /**
+   * Sets a tagged cache value
+   * 	 
+   * @param string $name cache name
+   * @param mixed $val variable to be stored
+   * @param array $tags tags
+   * @param bool $compressed Compressed storage
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
+   * @param int $store_method Storing method (serialize|json)	 	 
+   *
+   * @return bool
+   */
+  public function putTagged($name, $val, $tags, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
+    if ($this->put($name, $val, $compressed, $expiry, $store_method)) {
+      $this->_prepareTags($tags);
+      $this->_info->setItem($name, 'tags', $tags);
+      return true;
+    }
+  }
+
+  /**
+   * Alias of putTagged
+   * 	 
+   * @param string $name cache name
+   * @param mixed $val variable to be stored
+   * @param array $tags tags
+   * @param bool $compressed Compressed storage
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
+   * @param int $store_method Storing method (serialize|json)	 	 
+   *
+   * @return bool
+   */
+  public function setTagged($name, $val, $tags, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
+    return $this->putTagged($name, $val, $tags, $compressed, $expiry, $store_method);
+  }
+
+  /**
+   * Gets tagged cache values
+   * 
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function getTagged($tags) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $this->_prepareTags($tags);
+    $filtered = $this->_info->filterByTags($tags);
+    $ret = array();
+    foreach ($filtered as $key) {
+      $ret[$key] = $this->get($key);
+    }
+    return $ret;
+  }
+
+  /**
+   * Gets tags of a cached variable
+   * 
+   * @param string $key
+   * 
+   * @return array
+   */
+  public function getTags($key) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $ret=$this->_info->getItem($key, 'tags', 'array');
+    sort($ret);
+    return $ret;
+  }
+
+  /**
+   * Sets tags of a cached variable
+   * 
+   * @param string $key
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function setTags($key, $tags) {
+    if (!$this->isEnabled() || !$this->exist($key)) {
+      return false;
+    }
+
+    $this->init();
+    $this->_prepareTags($tags);
+    return $this->_info->setItem($key, 'tags', $tags);
+  }
+
+  /**
+   * Adds tags for a cached variable
+   * 
+   * @param string $key
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function addTags($key, $tags) {
+    if (!$this->isEnabled() || !$this->exist($key)) {
+      return false;
+    }
+
+    $this->init();
+    $this->_prepareTags($tags);
+    $tags = array_unique(array_merge($this->getTags($key), $tags));
+    return $this->setTags($key, $tags);
+  }
+
+  /**
+   * Clears cache values matching the given tags
+   * 
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function clearTagged($tags) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $this->_prepareTags($tags);
+    $filtered = $this->_info->filterByTags($tags);
+    return array_map(array($this, 'clear'), $filtered);
+  }
+
+  /**
+   * Alias of clearTagged
+   * 
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function deleteTagged($tags) {
+    return $this->clearTagged($tags);
+  }
+
+  /**
+   * Gets all tags currently in use
+   * 
+   * @return array
+   */
+  public function getAllTags() {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $tags = array();
+    foreach ($this->_info as $info) {
+      $tags = array_unique(array_merge($tags, $info['tags']));
+    }
+    sort($tags);
+    return $tags;
+  }
+  
+  /**
+   * Prepares tags parameter
+   * 
+   * @param array|string $tags
+   */
+  protected function _prepareTags(&$tags){
+    if (!is_array($tags)) {
+      $tags = array($tags);
+    }
+    $tags=array_unique($tags);
   }
 
 }

@@ -15,6 +15,7 @@ Caching library with the following features:
 - Counts cache hits (number of successful  retrieving)
 - Counts cache misses (number of attempts to retrieve not existing or expired cache item)
 - Supports compressed storing 
+- Tagged caching
 
 
 ## Installation
@@ -131,6 +132,28 @@ echo $cache->getOrPut('test.initial','initial',false,'3hours');
 echo $cache->getOrPut('test.initial',function(){return 'initial';},false,'3hours');
 
 ```
+Tagged caching:
+```php
+// Sets cache value and assigns tags to it
+$cache->putTagged('test.tagged1','tagged',array('tag1','tag2'));
+$cache->putTagged('test.tagged2','tagged2','tag2');
+
+// Retrieves cache values having the given tags
+var_dump($cache->getTagged('tag2'));
+
+// Adds more tags to the specified cache value
+$cache->addTags('test.tagged2','tag3');
+
+// Change tags without modifying cache value
+$cache->setTags('test.tagged1',array('tag2','tag3','tag4'));
+
+// Retrieves tags of a cached value
+$cache->getTags('test.tagged1');
+
+// Deletes cache variables having specified tags
+var_dump($cache->deleteTagged('tag2'));
+
+```
 Cached variable statistics:
 ```php
 // Displays cache creation time (first stored) in specified date format 
@@ -169,5 +192,8 @@ var_dump($cache->getKeys());
 
 // Displays all cached variable names that were read in current runtime session
 var_dump($cache->getReadKeys());
+
+// Retrieves all tag values currently in use
+var_dump($cache->getAllTags());
 
 ```
