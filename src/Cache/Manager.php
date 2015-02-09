@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.14
+ * @version 1.0.15
  */
 class Manager {
 
@@ -764,13 +764,16 @@ class Manager {
    * @return array
    */
   public function setTags($key, $tags) {
-    if (!$this->isEnabled() || !$this->exist($key)) {
+    if (!$this->isEnabled()) {
       return false;
     }
 
     $this->init();
-    $this->_prepareTags($tags);
-    return $this->_info->setItem($key, 'tags', $tags);
+    if ($this->exist($key)){
+      $this->_prepareTags($tags);
+      return $this->_info->setItem($key, 'tags', $tags);
+    }
+    return false;
   }
 
   /**
@@ -782,14 +785,17 @@ class Manager {
    * @return array
    */
   public function addTags($key, $tags) {
-    if (!$this->isEnabled() || !$this->exist($key)) {
+    if (!$this->isEnabled()) {
       return false;
     }
 
     $this->init();
-    $this->_prepareTags($tags);
-    $tags = array_unique(array_merge($this->getTags($key), $tags));
-    return $this->setTags($key, $tags);
+    if ($this->exist($key)){
+      $this->_prepareTags($tags);
+      $tags = array_unique(array_merge($this->getTags($key), $tags));
+      return $this->setTags($key, $tags);
+    }
+    return false;
   }
 
   /**

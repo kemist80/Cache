@@ -5,7 +5,7 @@ namespace Kemist\Cache;
 /**
  * Cache Info
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 class Info implements \ArrayAccess, \IteratorAggregate {
 
@@ -219,6 +219,9 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    */
   public function filterByTags(array $tags){
     $ret=array();
+    if (!is_array($tags)) {
+      $tags = array($tags);
+    }
     foreach ($this->_data as $key=>$info){
       if (count(array_intersect($tags, $info['tags'])) > 0){
         $ret[]=$key;
