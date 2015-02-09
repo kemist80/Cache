@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.15
+ * @version 1.0.16
  */
 class Manager {
 
@@ -794,7 +794,7 @@ class Manager {
 
     $this->init();
     $this->_prepareTags($tags);
-    $filtered = $this->_info->filterByTags($tags);
+    $filtered = (array)$this->_info->filterByTags($tags);
     return array_map(array($this, 'clear'), $filtered);
   }
 
