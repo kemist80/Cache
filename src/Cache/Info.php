@@ -5,7 +5,7 @@ namespace Kemist\Cache;
 /**
  * Cache Info
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 class Info implements \ArrayAccess, \IteratorAggregate {
 
@@ -170,13 +170,24 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * 
    * @param string $name
    */
-  public function createItem($name) {
+  public function createData($name) {
     $this->_data[$name] = array(
         'last_read' => null,
         'read_count' => 0,
         'tags' => array()
     );
     $this->touchItem($name,'created');
+  }
+  
+  /**
+   * Deletes an info item
+   * 
+   * @param string $name
+   */
+  public function deleteData($name) {
+    if (isset($this->_data[$name])){
+      unset($this->_data[$name]);
+    }
   }
 
   /**

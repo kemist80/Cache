@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.16
+ * @version 1.0.17
  */
 class Manager {
 
@@ -84,19 +84,30 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist($this->_info_key)) {
-      $this->_info->setData((array) $this->getOrPut($this->_info_key, array()));
-      foreach ($this->_info as $key => $data) {
-        if (!isset($data['expiry']) || $data['expiry'] == 0) {
-          continue;
-        } elseif (!$this->exist($key)) {
-          unset($this->_info[$key]);
-        } elseif (time() > $data['expiry']) {
-          $this->clear($key);
-        }
-      }
+      $info=(array) $this->getOrPut($this->_info_key, array());
+      array_walk($info,array($this,'_handleExpiration'));
+      $this->_info->setData($info);
     }
     $this->_initialised = 1;
     return true;
+  }
+
+  /**
+   * Handles cached value expiration
+   * 
+   * @param array $data
+   * @param string $key
+   * 
+   * @return boolean
+   */
+  protected function _handleExpiration($data,$key) {
+    if (!isset($data['expiry']) || $data['expiry'] == 0) {
+      return true;
+    } elseif (!$this->exist($key)) {
+      unset($this->_info[$key]);
+    } elseif (time() > $data['expiry']) {
+      $this->clear($key);
+    }
   }
 
   /**
@@ -218,7 +229,7 @@ class Manager {
       $expiry = ($expiry == 'never' ? 0 : $this->_extractExpiryDate($expiry));
 
       if (!isset($this->_info[$name])) {
-        $this->_info->createItem($name);
+        $this->_info->createData($name);
       }
 
       $this->_info->touchItem($name, array('last_access', 'last_write'));
@@ -307,14 +318,13 @@ class Manager {
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
 
-    $this->_info->touchItem($name, array('last_access', 'last_read'));
-    $this->_info->increaseItem($name, 'read_count');
-
     if ($ret !== null) {
+      $this->_info->touchItem($name, array('last_access', 'last_read'));
+      $this->_info->increaseItem($name, 'read_count');
       $this->_read_keys[] = $name;
       array_unique($this->_read_keys);
-    } elseif (isset($this->_info[$name])) {
-      unset($this->_info[$name]);
+    } else {
+      $this->_info->deleteData($name);
     }
 
     return $ret;
@@ -721,7 +731,7 @@ class Manager {
 
     $this->init();
     $this->_prepareTags($tags);
-    $filtered = (array)$this->_info->filterByTags($tags);
+    $filtered = (array) $this->_info->filterByTags($tags);
     $ret = array();
     foreach ($filtered as $key) {
       $ret[$key] = $this->get($key);
@@ -742,7 +752,7 @@ class Manager {
     }
 
     $this->init();
-    $ret=$this->_info->getItem($key, 'tags', 'array');
+    $ret = $this->_info->getItem($key, 'tags', 'array');
     sort($ret);
     return $ret;
   }
@@ -756,7 +766,7 @@ class Manager {
    * @return array
    */
   public function setTags($name, $tags) {
-    if ($this->_canModify($name)){
+    if ($this->_canModify($name)) {
       $this->_prepareTags($tags);
       return $this->_info->setItem($name, 'tags', $tags);
     }
@@ -772,7 +782,7 @@ class Manager {
    * @return array
    */
   public function addTags($name, $tags) {
-    if ($this->_canModify($name)){
+    if ($this->_canModify($name)) {
       $this->_prepareTags($tags);
       $tags = array_unique(array_merge($this->getTags($name), $tags));
       return $this->setTags($name, $tags);
@@ -794,7 +804,7 @@ class Manager {
 
     $this->init();
     $this->_prepareTags($tags);
-    $filtered = (array)$this->_info->filterByTags($tags);
+    $filtered = (array) $this->_info->filterByTags($tags);
     return array_map(array($this, 'clear'), $filtered);
   }
 
@@ -827,19 +837,19 @@ class Manager {
     sort($tags);
     return $tags;
   }
-  
+
   /**
    * Prepares tags parameter
    * 
    * @param array|string $tags
    */
-  protected function _prepareTags(&$tags){
+  protected function _prepareTags(&$tags) {
     if (!is_array($tags)) {
       $tags = array($tags);
     }
-    $tags=array_unique($tags);
+    $tags = array_unique($tags);
   }
-  
+
   /**
    * Checks if cache value info can be modified (cache is enabled and value exists)
    * 
@@ -847,7 +857,7 @@ class Manager {
    * 
    * @return boolean
    */
-  protected function _canModify($name){
+  protected function _canModify($name) {
     if (!$this->isEnabled()) {
       return false;
     }

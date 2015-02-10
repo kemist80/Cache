@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.11
+ * @version 1.0.12
  */
 class File extends StorageAbstract implements StorageInterface {
 
@@ -111,7 +111,7 @@ class File extends StorageAbstract implements StorageInterface {
       
     if (false !== $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb')) {      
       if ($this->_lockFile($f,true)) {
-        $ret = ($compressed ? fputs($f, gzcompress($val)) : fputs($f, $val));        
+        $ret = fputs($f,($compressed ? gzcompress($val) : $val));        
         $this->_unlockFile($f);
       }
 
@@ -130,16 +130,15 @@ class File extends StorageAbstract implements StorageInterface {
    *
    * @return mixed
    */
-  public function get($name, $compressed = false) {
-    $ret = false;
-
+  public function get($name, $compressed = false) {    
     $filename = $this->_cache_dir . '.' . $name . '.' . $this->_extension;
     if (!file_exists($filename)) {
       $this->miss();
       return false;
     }
-
-    if (false !== $f=fopen($filename, "rb")) {
+    
+    $ret = false;
+    if (false !== $f=fopen($filename, "rb")) {      
       if ($this->_lockFile($f)){
         $temp = '';
         while (!feof($f)) {
@@ -232,5 +231,5 @@ class File extends StorageAbstract implements StorageInterface {
     }
     return $files;
   }
-
+ 
 }
