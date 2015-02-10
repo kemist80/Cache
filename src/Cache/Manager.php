@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.17
+ * @version 1.0.18
  */
 class Manager {
 
@@ -309,7 +309,7 @@ class Manager {
   public function get($name, $default = null) {
     if (!$this->isEnabled() || ($this->init() && $name != $this->_info_key && !isset($this->_info[$name]))) {
       $this->_storage->miss();
-      return ($default instanceof \Closure ? call_user_func($default) : $default);
+      return $this->_processDefault($default);
     }
 
     $compressed = ($name == $this->_info_key ? true : $this->_info->getItem($name, 'compressed'));
@@ -345,7 +345,7 @@ class Manager {
     if ($this->exist($name)) {
       return $this->get($name);
     }
-    $value = ($default instanceof \Closure ? call_user_func($default) : $default);
+    $value = $this->_processDefault($default);
     $this->put($name, $value, $compressed, $expiry, $store_method);
     return $value;
   }
@@ -863,6 +863,17 @@ class Manager {
     }
     $this->init();
     return $this->exist($name);
+  }
+  
+  /**
+   * Processes default value
+   * 
+   * @param \Closure|mixed $default
+   * 
+   * @return mixed
+   */
+  protected function _processDefault($default){
+    return ($default instanceof \Closure ? call_user_func($default) : $default);
   }
 
 }
