@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.18
+ * @version 1.0.19
  */
 class Manager {
 
@@ -312,8 +312,7 @@ class Manager {
       return $this->_processDefault($default);
     }
 
-    $compressed = ($name == $this->_info_key ? true : $this->_info->getItem($name, 'compressed'));
-    $store_method = ($name == $this->_info_key ? self::STORE_METHOD_JSON : $this->_info->getItem($name, 'store_method'));
+    list($compressed,$store_method) = $this->_extractParameters($name);
     $secret = $this->_encryptKey($name);
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
@@ -328,6 +327,19 @@ class Manager {
     }
 
     return $ret;
+  }
+  
+  /**
+   * Extract cached value parameters
+   * 
+   * @param string $name
+   * 
+   * @return array
+   */
+  protected function _extractParameters($name){    
+    $compressed = ($name == $this->_info_key ? true : $this->_info->getItem($name, 'compressed'));
+    $store_method = ($name == $this->_info_key ? self::STORE_METHOD_JSON : $this->_info->getItem($name, 'store_method'));
+    return array($compressed,$store_method);
   }
 
   /**
