@@ -22,13 +22,12 @@ interface StorageInterface {
   public function info($get_fields = false);
 
   public function init();
-  
+
   public function getHits();
-  
+
   public function getMisses();
-  
+
   public function miss();
-  
+
   public function hit();
-  
 }

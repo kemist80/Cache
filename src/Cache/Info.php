@@ -105,12 +105,12 @@ class Info implements \ArrayAccess, \IteratorAggregate {
       case 'date':
         return isset($this->_data[$name][$item_name]) ? date($format, $this->_data[$name][$item_name]) : null;
       case 'int':
-        return (int)$this->_getItemOrDefault($name, $item_name,0);
+        return (int) $this->_getItemOrDefault($name, $item_name, 0);
       default:
         return $this->_getItemOrDefault($name, $item_name);
     }
   }
-  
+
   /**
    * Gets an item value or default if not exists
    * 
@@ -120,10 +120,10 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * 
    * @return mixed
    */
-  protected function _getItemOrDefault($name,$item_name,$default=null){
+  protected function _getItemOrDefault($name, $item_name, $default = null) {
     return isset($this->_data[$name][$item_name]) ? $this->_data[$name][$item_name] : $default;
   }
-  
+
   /**
    * Sets an item
    * 
@@ -131,8 +131,8 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param string $item
    * @param mixed $value
    */
-  public function setItem($name,$item,$value){
-    $this->_data[$name][$item]=$value;
+  public function setItem($name, $item, $value) {
+    $this->_data[$name][$item] = $value;
   }
 
   /**
@@ -176,16 +176,16 @@ class Info implements \ArrayAccess, \IteratorAggregate {
         'read_count' => 0,
         'tags' => array()
     );
-    $this->touchItem($name,'created');
+    $this->touchItem($name, 'created');
   }
-  
+
   /**
    * Deletes an info item
    * 
    * @param string $name
    */
   public function deleteData($name) {
-    if (isset($this->_data[$name])){
+    if (isset($this->_data[$name])) {
       unset($this->_data[$name]);
     }
   }
@@ -208,7 +208,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
   public function setData(array $data = array()) {
     $this->_data = $data;
   }
-  
+
   /**
    * Gets expiry information
    * 
@@ -219,8 +219,8 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    */
   public function getExpiry($name, $format = 'U') {
     return isset($this->_data[$name]['expiry']) ? ($this->_data[$name]['expiry'] == 0 ? 0 : date($format, $this->_data[$name]['expiry'])) : null;
-  }  
-  
+  }
+
   /**
    * Get cache names having the given tags
    * 
@@ -228,12 +228,12 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * 
    * @return array
    */
-  public function filterByTags(array $tags){
-    $ret=array();
-    foreach ($this->_data as $key=>$info){
-      if (count(array_intersect($tags, $info['tags'])) > 0){
-        $ret[]=$key;
-      }      
+  public function filterByTags(array $tags) {
+    $ret = array();
+    foreach ($this->_data as $key => $info) {
+      if (count(array_intersect($tags, $info['tags'])) > 0) {
+        $ret[] = $key;
+      }
     }
     return $ret;
   }

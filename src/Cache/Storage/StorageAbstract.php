@@ -23,12 +23,12 @@ abstract class StorageAbstract {
    * @var int
    */
   protected $_hits = 0;
-  
+
   /**
    * Number of misses
    * @var int
    */
-  protected $_misses = 0;  
+  protected $_misses = 0;
 
   /**
    * Cache provider Object
@@ -61,27 +61,27 @@ abstract class StorageAbstract {
     if ($ret !== false) {
       $this->hit();
       $this->_storeName($name);
-    }else{
+    } else {
       $this->miss();
     }
 
     return $ret;
   }
-  
+
   /**
    * Cache miss occured
    */
-  public function miss(){
+  public function miss() {
     $this->_misses++;
   }
-  
+
   /**
    * Cache hit occured
    */
-  public function hit(){
+  public function hit() {
     $this->_hits++;
   }
-  
+
   /**
    * Deletes the specified cache or each one if '' given
    * 	 
@@ -130,7 +130,7 @@ abstract class StorageAbstract {
   public function getHits() {
     return $this->_hits;
   }
-  
+
   /**
    * Retrieves cache misses
    * 
@@ -138,7 +138,7 @@ abstract class StorageAbstract {
    */
   public function getMisses() {
     return $this->_misses;
-  }  
+  }
 
   /**
    * Stores cache name

@@ -86,7 +86,7 @@ class File extends StorageAbstract implements StorageInterface {
   public function clear($name = '') {
     if ($name == '') {
       foreach ($this->_getAllCacheFiles() as $file) {
-        unlink($this->_cache_dir . $file);        
+        unlink($this->_cache_dir . $file);
       }
       return true;
     } elseif (file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension)) {
@@ -108,10 +108,10 @@ class File extends StorageAbstract implements StorageInterface {
    */
   public function put($name, $val, $compressed = false) {
     $ret = false;
-      
-    if (false !== $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb')) {      
-      if ($this->_lockFile($f,true)) {
-        $ret = fputs($f,($compressed ? gzcompress($val) : $val));        
+
+    if (false !== $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb')) {
+      if ($this->_lockFile($f, true)) {
+        $ret = fputs($f, ($compressed ? gzcompress($val) : $val));
         $this->_unlockFile($f);
       }
 
@@ -130,23 +130,23 @@ class File extends StorageAbstract implements StorageInterface {
    *
    * @return mixed
    */
-  public function get($name, $compressed = false) {    
+  public function get($name, $compressed = false) {
     $filename = $this->_cache_dir . '.' . $name . '.' . $this->_extension;
     if (!file_exists($filename)) {
       $this->miss();
       return false;
     }
-    
+
     $ret = false;
-    if (false !== $f=fopen($filename, "rb")) {      
-      if ($this->_lockFile($f)){
+    if (false !== $f = fopen($filename, "rb")) {
+      if ($this->_lockFile($f)) {
         $temp = '';
         while (!feof($f)) {
           $temp .= fread($f, 8192);
         }
-        $this->_unlockFile($f);        
+        $this->_unlockFile($f);
         $this->hit();
-        $ret = ($compressed ? gzuncompress($temp) : $temp);        
+        $ret = ($compressed ? gzuncompress($temp) : $temp);
       }
       fclose($f);
       $ret ? $this->_storeName($name) : null;
@@ -154,7 +154,7 @@ class File extends StorageAbstract implements StorageInterface {
 
     return $ret;
   }
-  
+
   /**
    * Locks file
    * 
@@ -163,13 +163,13 @@ class File extends StorageAbstract implements StorageInterface {
    * 
    * @return bool
    */
-  protected function _lockFile($f,$write=false){
-    if (!$this->_file_locking){
+  protected function _lockFile($f, $write = false) {
+    if (!$this->_file_locking) {
       return true;
     }
     return ($write ? flock($f, LOCK_EX) : flock($f, LOCK_SH));
   }
-  
+
   /**
    * Unlocks file
    * 
@@ -177,8 +177,8 @@ class File extends StorageAbstract implements StorageInterface {
    * 
    * @return bool
    */
-  protected function _unlockFile($f) {    
-    if (!$this->_file_locking){
+  protected function _unlockFile($f) {
+    if (!$this->_file_locking) {
       return true;
     }
     return flock($f, LOCK_UN);
@@ -197,13 +197,13 @@ class File extends StorageAbstract implements StorageInterface {
     $ret['CACHE_HITS'] = $this->_hits;
     $ret['CACHE_MISSES'] = $this->_misses;
     $fields = array();
-    
+
     foreach ($this->_getAllCacheFiles() as $file) {
       $name = basename($file, '.' . $this->_extension);
       $ret[$name]['size'] = filesize(($this->_cache_dir . $file));
       $ret[$name]['last_modified'] = date('Y.m.d. H:i:s', filemtime($this->_cache_dir . $file));
       $ret[$name]['last_accessed'] = date('Y.m.d. H:i:s', fileatime($this->_cache_dir . $file));
-      $fields[] = $name;      
+      $fields[] = $name;
     }
 
     if ($get_fields) {
@@ -215,21 +215,21 @@ class File extends StorageAbstract implements StorageInterface {
 
     return $ret;
   }
-  
+
   /**
    * Gets all cache files
    * 
    * @return array
    */
-  protected function _getAllCacheFiles(){
-    $files=array();
+  protected function _getAllCacheFiles() {
+    $files = array();
     foreach (scandir($this->_cache_dir) as $file) {
       $temp = explode('.', $file);
       if (array_pop($temp) == $this->_extension) {
-        $files[]=$file;
+        $files[] = $file;
       }
     }
     return $files;
   }
- 
+
 }

@@ -84,8 +84,8 @@ class Manager {
     $this->_storage->init();
 
     if ($this->exist($this->_info_key)) {
-      $info=(array) $this->getOrPut($this->_info_key, array());
-      array_walk($info,array($this,'_handleExpiration'));
+      $info = (array) $this->getOrPut($this->_info_key, array());
+      array_walk($info, array($this, '_handleExpiration'));
       $this->_info->setData($info);
     }
     $this->_initialised = 1;
@@ -100,7 +100,7 @@ class Manager {
    * 
    * @return boolean
    */
-  protected function _handleExpiration($data,$key) {
+  protected function _handleExpiration($data, $key) {
     if (!isset($data['expiry']) || $data['expiry'] == 0) {
       return true;
     } elseif (!$this->exist($key)) {
@@ -312,7 +312,7 @@ class Manager {
       return $this->_processDefault($default);
     }
 
-    list($compressed,$store_method) = $this->_extractParameters($name);
+    list($compressed, $store_method) = $this->_extractParameters($name);
     $secret = $this->_encryptKey($name);
     $raw = $this->_storage->get($secret, $compressed);
     $ret = $this->_decode($raw, $store_method);
@@ -328,7 +328,7 @@ class Manager {
 
     return $ret;
   }
-  
+
   /**
    * Extract cached value parameters
    * 
@@ -336,10 +336,10 @@ class Manager {
    * 
    * @return array
    */
-  protected function _extractParameters($name){    
+  protected function _extractParameters($name) {
     $compressed = ($name == $this->_info_key ? true : $this->_info->getItem($name, 'compressed'));
     $store_method = ($name == $this->_info_key ? self::STORE_METHOD_JSON : $this->_info->getItem($name, 'store_method'));
-    return array($compressed,$store_method);
+    return array($compressed, $store_method);
   }
 
   /**
@@ -876,7 +876,7 @@ class Manager {
     $this->init();
     return $this->exist($name);
   }
-  
+
   /**
    * Processes default value
    * 
@@ -884,7 +884,7 @@ class Manager {
    * 
    * @return mixed
    */
-  protected function _processDefault($default){
+  protected function _processDefault($default) {
     return ($default instanceof \Closure ? call_user_func($default) : $default);
   }
 
