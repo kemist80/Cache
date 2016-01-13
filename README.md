@@ -39,9 +39,9 @@ Initialization:
 <?php
 
 require_once('vendor/autoload.php');
-use Kemist\Cache\Manager as Cache;
+use Kemist\Cache\Cache as Cache;
 
-$storage=new Kemist\Cache\Storage\File();
+$storage=new Kemist\Cache\Storage\FileStorage();
 $cache=new Cache($storage);
 
 ```

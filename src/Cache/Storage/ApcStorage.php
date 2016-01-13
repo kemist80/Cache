@@ -3,13 +3,13 @@
 namespace Kemist\Cache\Storage;
 
 /**
- * Apc Storage
+ * ApcStorage
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.8
+ * @version 1.0.9
  */
-class Apc extends StorageAbstract implements StorageInterface {
+class ApcStorage extends AbstractStorage implements StorageInterface {
 
   /**
    * Constructor
@@ -17,8 +17,8 @@ class Apc extends StorageAbstract implements StorageInterface {
    * @param array $options
    */
   public function __construct(ApcObject $apc, array $options = array()) {
-    $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
-    $this->_provider = $apc;
+    $this->prefix = (isset($options['prefix']) ? $options['prefix'] : '');
+    $this->provider = $apc;
   }
 
   /**
@@ -40,7 +40,7 @@ class Apc extends StorageAbstract implements StorageInterface {
    * @return bool
    */
   public function exist($name) {
-    if ($this->_provider->get($this->_prefix . $name)) {
+    if ($this->provider->get($this->prefix . $name)) {
       return true;
     }
     return false;
@@ -55,8 +55,8 @@ class Apc extends StorageAbstract implements StorageInterface {
    * @return bool
    */
   public function put($name, $val, $compressed = false) {
-    $ret = $this->_provider->put($this->_prefix . $name, $val);
-    $ret ? $this->_storeName($name) : null;
+    $ret = $this->provider->put($this->prefix . $name, $val);
+    $ret ? $this->storeName($name) : null;
     return $ret;
   }
 

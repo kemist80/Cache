@@ -5,55 +5,55 @@ namespace Kemist\Cache;
 use Kemist\Cache\Storage\StorageInterface;
 
 /**
- * Cache manager object for caching variables
+ * Cache object for caching variables
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.19
+ * @version 1.1.9
  */
-class Manager {
+class Cache {
 
   /**
    * Cache storage object
    * @var StorageInterface
    */
-  protected $_storage;
+  protected $storage;
 
   /**
    * Caching is enabled
    * @var bool 
    */
-  protected $_enabled = true;
+  protected $enabled = true;
 
   /**
    * Key name encryption
    * @var bool 
    */
-  protected $_encrypt_keys = true;
+  protected $encrypt_keys = true;
 
   /**
    * Cache values information
    * @var Info
    */
-  protected $_info;
+  protected $info;
 
   /**
    * Read key names
    * @var array 
    */
-  protected $_read_keys = array();
+  protected $read_keys = array();
 
   /**
    * System reserved info key
    * @var string 
    */
-  protected $_info_key = '_system.info';
+  protected $info_key = '_system.info';
 
   /**
    * Initialised (-1: not yet, 0: in progress, 1: initialised)
    * @var int 
    */
-  protected $_initialised = -1;
+  protected $initialised = -1;
 
   const STORE_METHOD_SERIALIZE = 1;
   const STORE_METHOD_JSON = 2;
@@ -65,30 +65,30 @@ class Manager {
    * @param array $options
    */
   public function __construct(StorageInterface $storage, array $options = array()) {
-    $this->_storage = $storage;
-    $this->_enabled = (isset($options['enabled']) ? $options['enabled'] : true);
-    $this->_encrypt_keys = (isset($options['encrypt_keys']) ? $options['encrypt_keys'] : true);
-    $this->_info = new Info();
+    $this->storage = $storage;
+    $this->enabled = (isset($options['enabled']) ? $options['enabled'] : true);
+    $this->encrypt_keys = (isset($options['encrypt_keys']) ? $options['encrypt_keys'] : true);
+    $this->info = new Info();
   }
 
   /**
    * Initialise (lazy)
    */
   public function init() {
-    if ($this->_initialised > -1) {
+    if ($this->initialised > -1) {
       return true;
     }
 
     // Initialising in progress 
-    $this->_initialised = 0;
-    $this->_storage->init();
+    $this->initialised = 0;
+    $this->storage->init();
 
-    if ($this->exist($this->_info_key)) {
-      $info = (array) $this->getOrPut($this->_info_key, array());
-      array_walk($info, array($this, '_handleExpiration'));
-      $this->_info->setData($info);
+    if ($this->exist($this->info_key)) {
+      $info = (array) $this->getOrPut($this->info_key, array());
+      array_walk($info, array($this, 'handleExpiration'));
+      $this->info->setData($info);
     }
-    $this->_initialised = 1;
+    $this->initialised = 1;
     return true;
   }
 
@@ -100,11 +100,11 @@ class Manager {
    * 
    * @return boolean
    */
-  protected function _handleExpiration($data, $key) {
+  protected function handleExpiration($data, $key) {
     if (!isset($data['expiry']) || $data['expiry'] == 0) {
       return true;
     } elseif (!$this->exist($key)) {
-      unset($this->_info[$key]);
+      unset($this->info[$key]);
     } elseif (time() > $data['expiry']) {
       $this->clear($key);
     }
@@ -123,7 +123,7 @@ class Manager {
     }
 
     $this->init();
-    return $this->_info->getData($name);
+    return $this->info->getData($name);
   }
 
   /**
@@ -132,7 +132,7 @@ class Manager {
    * @return bool
    */
   public function isEnabled() {
-    return $this->_enabled;
+    return $this->enabled;
   }
 
   /**
@@ -141,7 +141,7 @@ class Manager {
    * @param bool $enabled
    */
   public function setEnabled($enabled) {
-    $this->_enabled = (bool) $enabled;
+    $this->enabled = (bool) $enabled;
   }
 
   /**
@@ -157,8 +157,8 @@ class Manager {
     }
 
     $this->init();
-    $secret = $this->_encryptKey($name);
-    return ($this->_storage->exist($secret) && ($name == $this->_info_key || isset($this->_info[$name])));
+    $secret = $this->encryptKey($name);
+    return ($this->storage->exist($secret) && ($name == $this->info_key || isset($this->info[$name])));
   }
 
   /**
@@ -174,13 +174,13 @@ class Manager {
     }
 
     $this->init();
-    $secret = ($name != '' ? $this->_encryptKey($name) : $name);
-    $ret = $this->_storage->clear($secret);
+    $secret = ($name != '' ? $this->encryptKey($name) : $name);
+    $ret = $this->storage->clear($secret);
 
     if ($name == '') {
-      $this->_info = new Info();
-    } elseif (isset($this->_info[$name])) {
-      unset($this->_info[$name]);
+      $this->info = new Info();
+    } elseif (isset($this->info[$name])) {
+      unset($this->info[$name]);
     }
 
     return $ret;
@@ -223,23 +223,23 @@ class Manager {
     }
 
     $this->init();
-    $secret = $this->_encryptKey($name);
-    $data = $this->_encode($val, $store_method);
-    if (false !== $ret = $this->_storage->put($secret, $data, $compressed)) {
-      $expiry = ($expiry == 'never' ? 0 : $this->_extractExpiryDate($expiry));
+    $secret = $this->encryptKey($name);
+    $data = $this->encode($val, $store_method);
+    if (false !== $ret = $this->storage->put($secret, $data, $compressed)) {
+      $expiry = ($expiry == 'never' ? 0 : $this->extractExpiryDate($expiry));
 
-      if (!isset($this->_info[$name])) {
-        $this->_info->createData($name);
+      if (!isset($this->info[$name])) {
+        $this->info->createData($name);
       }
 
-      $this->_info->touchItem($name, array('last_access', 'last_write'));
-      $this->_info->appendData($name, array(
+      $this->info->touchItem($name, array('last_access', 'last_write'));
+      $this->info->appendData($name, array(
           'expiry' => $expiry,
           'size' => strlen($data),
           'compressed' => $compressed,
           'store_method' => $store_method,
       ));
-      $this->_info->increaseItem($name, 'write_count');
+      $this->info->increaseItem($name, 'write_count');
     }
 
     return $ret;
@@ -252,7 +252,7 @@ class Manager {
    * 
    * @return int
    */
-  protected function _extractExpiryDate($expiry) {
+  protected function extractExpiryDate($expiry) {
     if (is_string($expiry)) {
       if (strtotime($expiry) === false) {
         throw new \InvalidArgumentException('Invalid date format!');
@@ -307,23 +307,23 @@ class Manager {
    * @return mixed
    */
   public function get($name, $default = null) {
-    if (!$this->isEnabled() || ($this->init() && $name != $this->_info_key && !isset($this->_info[$name]))) {
-      $this->_storage->miss();
-      return $this->_processDefault($default);
+    if (!$this->isEnabled() || ($this->init() && $name != $this->info_key && !isset($this->info[$name]))) {
+      $this->storage->miss();
+      return $this->processDefault($default);
     }
 
-    list($compressed, $store_method) = $this->_extractParameters($name);
-    $secret = $this->_encryptKey($name);
-    $raw = $this->_storage->get($secret, $compressed);
-    $ret = $this->_decode($raw, $store_method);
+    list($compressed, $store_method) = $this->extractParameters($name);
+    $secret = $this->encryptKey($name);
+    $raw = $this->storage->get($secret, $compressed);
+    $ret = $this->decode($raw, $store_method);
 
     if ($ret !== null) {
-      $this->_info->touchItem($name, array('last_access', 'last_read'));
-      $this->_info->increaseItem($name, 'read_count');
-      $this->_read_keys[] = $name;
-      array_unique($this->_read_keys);
+      $this->info->touchItem($name, array('last_access', 'last_read'));
+      $this->info->increaseItem($name, 'read_count');
+      $this->read_keys[] = $name;
+      array_unique($this->read_keys);
     } else {
-      $this->_info->deleteData($name);
+      $this->info->deleteData($name);
     }
 
     return $ret;
@@ -336,9 +336,9 @@ class Manager {
    * 
    * @return array
    */
-  protected function _extractParameters($name) {
-    $compressed = ($name == $this->_info_key ? true : $this->_info->getItem($name, 'compressed'));
-    $store_method = ($name == $this->_info_key ? self::STORE_METHOD_JSON : $this->_info->getItem($name, 'store_method'));
+  protected function extractParameters($name) {
+    $compressed = ($name == $this->info_key ? true : $this->info->getItem($name, 'compressed'));
+    $store_method = ($name == $this->info_key ? self::STORE_METHOD_JSON : $this->info->getItem($name, 'store_method'));
     return array($compressed, $store_method);
   }
 
@@ -357,7 +357,7 @@ class Manager {
     if ($this->exist($name)) {
       return $this->get($name);
     }
-    $value = $this->_processDefault($default);
+    $value = $this->processDefault($default);
     $this->put($name, $value, $compressed, $expiry, $store_method);
     return $value;
   }
@@ -409,7 +409,7 @@ class Manager {
       return false;
     }
     $this->init();
-    return $this->_storage->info($get_fields);
+    return $this->storage->info($get_fields);
   }
 
   /**
@@ -420,7 +420,7 @@ class Manager {
    * 	 
    * @return mixed
    */
-  protected function _encode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
+  protected function encode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
     switch ($store_method) {
       case self::STORE_METHOD_JSON:
         $var = json_encode($var);
@@ -440,7 +440,7 @@ class Manager {
    * 	 
    * @return mixed
    */
-  protected function _decode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
+  protected function decode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
     if (!$var) {
       return null;
     }
@@ -464,8 +464,8 @@ class Manager {
    * 
    * @return string
    */
-  protected function _encryptKey($key) {
-    return ($this->_encrypt_keys ? sha1($key) : $key);
+  protected function encryptKey($key) {
+    return ($this->encrypt_keys ? sha1($key) : $key);
   }
 
   /**
@@ -478,7 +478,7 @@ class Manager {
       return 0;
     }
     $this->init();
-    return $this->_storage->getHits();
+    return $this->storage->getHits();
   }
 
   /**
@@ -491,17 +491,17 @@ class Manager {
       return 0;
     }
     $this->init();
-    return $this->_storage->getMisses();
+    return $this->storage->getMisses();
   }
 
   /**
    * Stores cache values expiral information into cache
    */
   public function writeExpirals() {
-    if (!$this->isEnabled() || $this->_initialised < 1) {
+    if (!$this->isEnabled() || $this->initialised < 1) {
       return false;
     }
-    return $this->put($this->_info_key, $this->_info->getData(), true, 0, self::STORE_METHOD_JSON);
+    return $this->put($this->info_key, $this->info->getData(), true, 0, self::STORE_METHOD_JSON);
   }
 
   /**
@@ -517,7 +517,7 @@ class Manager {
       return false;
     }
     $this->init();
-    return $this->_info->getExpiry($name, $format);
+    return $this->info->getExpiry($name, $format);
   }
 
   /**
@@ -539,10 +539,10 @@ class Manager {
    * @param int $ttl
    */
   public function setTTL($name, $ttl) {
-    if ($this->_canModify($name)) {
+    if ($this->canModify($name)) {
       $created = (int) $this->getCreated($name);
       $ttl = (int) $ttl;
-      $this->_info->setItem($name, 'expiry', ($ttl <= 0 ? 0 : $created + $ttl));
+      $this->info->setItem($name, 'expiry', ($ttl <= 0 ? 0 : $created + $ttl));
     }
   }
 
@@ -553,8 +553,8 @@ class Manager {
    * @param mixed $expiry
    */
   public function setExpiry($name, $expiry) {
-    if ($this->_canModify($name)) {
-      $this->_info->setItem($name, 'expiry', $this->_extractExpiryDate($expiry));
+    if ($this->canModify($name)) {
+      $this->info->setItem($name, 'expiry', $this->extractExpiryDate($expiry));
     }
   }
 
@@ -567,7 +567,7 @@ class Manager {
    * @return string
    */
   public function getCreated($name, $format = 'U') {
-    return $this->_info->getItem($name, 'created', 'date', $format);
+    return $this->info->getItem($name, 'created', 'date', $format);
   }
 
   /**
@@ -579,7 +579,7 @@ class Manager {
    * @return string
    */
   public function getLastAccess($name, $format = 'U') {
-    return $this->_info->getItem($name, 'last_access', 'date', $format);
+    return $this->info->getItem($name, 'last_access', 'date', $format);
   }
 
   /**
@@ -591,7 +591,7 @@ class Manager {
    * @return string
    */
   public function getLastRead($name, $format = 'U') {
-    return $this->_info->getItem($name, 'last_read', 'date', $format);
+    return $this->info->getItem($name, 'last_read', 'date', $format);
   }
 
   /**
@@ -603,7 +603,7 @@ class Manager {
    * @return string
    */
   public function getLastWrite($name, $format = 'U') {
-    return $this->_info->getItem($name, 'last_write', 'date', $format);
+    return $this->info->getItem($name, 'last_write', 'date', $format);
   }
 
   /**
@@ -614,7 +614,7 @@ class Manager {
    * @return int
    */
   public function getReadCount($name) {
-    return $this->_info->getItem($name, 'read_count', 'int');
+    return $this->info->getItem($name, 'read_count', 'int');
   }
 
   /**
@@ -625,7 +625,7 @@ class Manager {
    * @return int
    */
   public function getWriteCount($name) {
-    return $this->_info->getItem($name, 'write_count', 'int');
+    return $this->info->getItem($name, 'write_count', 'int');
   }
 
   /**
@@ -638,7 +638,7 @@ class Manager {
       return false;
     }
     $this->init();
-    return $this->_info->getKeys();
+    return $this->info->getKeys();
   }
 
   /**
@@ -647,7 +647,7 @@ class Manager {
    * @return array
    */
   public function getReadKeys() {
-    return $this->_read_keys;
+    return $this->read_keys;
   }
 
   /**
@@ -656,7 +656,7 @@ class Manager {
    * @return StorageInterface
    */
   public function getStorage() {
-    return $this->_storage;
+    return $this->storage;
   }
 
   /**
@@ -665,7 +665,7 @@ class Manager {
    * @return bool
    */
   public function getEncryptKeys() {
-    return $this->_encrypt_keys;
+    return $this->encrypt_keys;
   }
 
   /**
@@ -674,7 +674,7 @@ class Manager {
    * @param bool $encrypt_keys
    */
   public function setEncryptKeys($encrypt_keys) {
-    $this->_encrypt_keys = (bool) $encrypt_keys;
+    $this->encrypt_keys = (bool) $encrypt_keys;
   }
 
   /**
@@ -683,7 +683,7 @@ class Manager {
    * @param StorageInterface $storage
    */
   public function setStorage(StorageInterface $storage) {
-    $this->_storage = $storage;
+    $this->storage = $storage;
   }
 
   /**
@@ -707,8 +707,8 @@ class Manager {
    */
   public function putTagged($name, $val, $tags, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
     if ($this->put($name, $val, $compressed, $expiry, $store_method)) {
-      $this->_prepareTags($tags);
-      $this->_info->setItem($name, 'tags', $tags);
+      $this->prepareTags($tags);
+      $this->info->setItem($name, 'tags', $tags);
       return true;
     }
   }
@@ -742,8 +742,8 @@ class Manager {
     }
 
     $this->init();
-    $this->_prepareTags($tags);
-    $filtered = (array) $this->_info->filterByTags($tags);
+    $this->prepareTags($tags);
+    $filtered = (array) $this->info->filterByTags($tags);
     $ret = array();
     foreach ($filtered as $key) {
       $ret[$key] = $this->get($key);
@@ -764,7 +764,7 @@ class Manager {
     }
 
     $this->init();
-    $ret = $this->_info->getItem($key, 'tags', 'array');
+    $ret = $this->info->getItem($key, 'tags', 'array');
     sort($ret);
     return $ret;
   }
@@ -778,9 +778,9 @@ class Manager {
    * @return array
    */
   public function setTags($name, $tags) {
-    if ($this->_canModify($name)) {
-      $this->_prepareTags($tags);
-      return $this->_info->setItem($name, 'tags', $tags);
+    if ($this->canModify($name)) {
+      $this->prepareTags($tags);
+      return $this->info->setItem($name, 'tags', $tags);
     }
     return false;
   }
@@ -794,8 +794,8 @@ class Manager {
    * @return array
    */
   public function addTags($name, $tags) {
-    if ($this->_canModify($name)) {
-      $this->_prepareTags($tags);
+    if ($this->canModify($name)) {
+      $this->prepareTags($tags);
       $tags = array_unique(array_merge($this->getTags($name), $tags));
       return $this->setTags($name, $tags);
     }
@@ -815,8 +815,8 @@ class Manager {
     }
 
     $this->init();
-    $this->_prepareTags($tags);
-    $filtered = (array) $this->_info->filterByTags($tags);
+    $this->prepareTags($tags);
+    $filtered = (array) $this->info->filterByTags($tags);
     return array_map(array($this, 'clear'), $filtered);
   }
 
@@ -843,7 +843,7 @@ class Manager {
 
     $this->init();
     $tags = array();
-    foreach ($this->_info as $info) {
+    foreach ($this->info as $info) {
       $tags = array_unique(array_merge($tags, $info['tags']));
     }
     sort($tags);
@@ -855,7 +855,7 @@ class Manager {
    * 
    * @param array|string $tags
    */
-  protected function _prepareTags(&$tags) {
+  protected function prepareTags(&$tags) {
     if (!is_array($tags)) {
       $tags = array($tags);
     }
@@ -869,7 +869,7 @@ class Manager {
    * 
    * @return boolean
    */
-  protected function _canModify($name) {
+  protected function canModify($name) {
     if (!$this->isEnabled()) {
       return false;
     }
@@ -884,7 +884,7 @@ class Manager {
    * 
    * @return mixed
    */
-  protected function _processDefault($default) {
+  protected function processDefault($default) {
     return ($default instanceof \Closure ? call_user_func($default) : $default);
   }
 

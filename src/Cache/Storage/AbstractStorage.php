@@ -3,50 +3,50 @@
 namespace Kemist\Cache\Storage;
 
 /**
- * StorageAbstract class
+ * AbstractStorage class
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.4
+ * @version 1.0.5
  */
-abstract class StorageAbstract {
+abstract class AbstractStorage {
 
   /**
    * Cached field names
    * 	 	
    * @var array
    */
-  protected $_fields = array();
+  protected $fields = array();
 
   /**
    * Number of hits
    * @var int
    */
-  protected $_hits = 0;
+  protected $hits = 0;
 
   /**
    * Number of misses
    * @var int
    */
-  protected $_misses = 0;
+  protected $misses = 0;
 
   /**
    * Cache provider Object
    * @var object
    */
-  protected $_provider;
+  protected $provider;
 
   /**
    * Info method
    * @var string 
    */
-  protected $_info_method = 'info';
+  protected $info_method = 'info';
 
   /**
    * Key prefix to avoid collisions
    * @var string 
    */
-  protected $_prefix = '';
+  protected $prefix = '';
 
   /**
    * Retrieves the content of $name cache
@@ -57,10 +57,10 @@ abstract class StorageAbstract {
    * @return mixed
    */
   public function get($name, $compressed = false) {
-    $ret = $this->_provider->get($this->_prefix . $name);
+    $ret = $this->provider->get($this->prefix . $name);
     if ($ret !== false) {
       $this->hit();
-      $this->_storeName($name);
+      $this->storeName($name);
     } else {
       $this->miss();
     }
@@ -72,14 +72,14 @@ abstract class StorageAbstract {
    * Cache miss occured
    */
   public function miss() {
-    $this->_misses++;
+    $this->misses++;
   }
 
   /**
    * Cache hit occured
    */
   public function hit() {
-    $this->_hits++;
+    $this->hits++;
   }
 
   /**
@@ -91,9 +91,9 @@ abstract class StorageAbstract {
    */
   public function clear($name = '') {
     if ($name == '') {
-      return $this->_provider->flush();
+      return $this->provider->flush();
     } else {
-      return $this->_provider->delete($this->_prefix . $name);
+      return $this->provider->delete($this->prefix . $name);
     }
   }
 
@@ -108,13 +108,13 @@ abstract class StorageAbstract {
     $ret = array();
     $classname = explode('\\', get_class($this));
     $ret['CACHE_TYPE'] = end($classname);
-    $ret['CACHE_HITS'] = $this->_hits;
-    $ret['CACHE_MISSES'] = $this->_misses;
+    $ret['CACHE_HITS'] = $this->hits;
+    $ret['CACHE_MISSES'] = $this->misses;
 
-    $ret = array_merge($ret, call_user_func(array($this->_provider, $this->_info_method)));
+    $ret = array_merge($ret, call_user_func(array($this->provider, $this->info_method)));
 
     if ($get_fields) {
-      foreach ($this->_fields as $field) {
+      foreach ($this->fields as $field) {
         $ret['field_content'][$field] = $this->get($field);
       }
     }
@@ -128,7 +128,7 @@ abstract class StorageAbstract {
    * @return int
    */
   public function getHits() {
-    return $this->_hits;
+    return $this->hits;
   }
 
   /**
@@ -137,7 +137,7 @@ abstract class StorageAbstract {
    * @return int
    */
   public function getMisses() {
-    return $this->_misses;
+    return $this->misses;
   }
 
   /**
@@ -145,9 +145,9 @@ abstract class StorageAbstract {
    * 
    * @param string $name
    */
-  protected function _storeName($name) {
-    if (!in_array($name, $this->_fields)) {
-      $this->_fields[] = $name;
+  protected function storeName($name) {
+    if (!in_array($name, $this->fields)) {
+      $this->fields[] = $name;
     }
   }
 

@@ -3,31 +3,31 @@
 namespace Kemist\Cache\Storage;
 
 /**
- * Memcache Storage
+ * MemcacheStorage
  * 
  * @package Kemist\Cache
  *
- * @version 1.0.11
+ * @version 1.1.2
  */
-class Memcache extends StorageAbstract implements StorageInterface {
+class MemcacheStorage extends AbstractStorage implements StorageInterface {
 
   /**
    * Server ip
    * @var string 
    */
-  protected $_server;
+  protected $server;
 
   /**
    * Port number
    * @var int 
    */
-  protected $_port;
+  protected $port;
 
   /**
    * Info method
    * @var string 
    */
-  protected $_info_method = 'getStats';
+  protected $info_method = 'getStats';
 
   /**
    * Constructor
@@ -35,10 +35,10 @@ class Memcache extends StorageAbstract implements StorageInterface {
    * @param array $options
    */
   public function __construct($memcache, array $options = array()) {
-    $this->_prefix = (isset($options['prefix']) ? $options['prefix'] : '');
-    $this->_server = (isset($options['server']) ? $options['server'] : '127.0.0.1');
-    $this->_port = (isset($options['port']) ? $options['port'] : 11211);
-    $this->_provider = $memcache;
+    $this->prefix = (isset($options['prefix']) ? $options['prefix'] : '');
+    $this->server = (isset($options['server']) ? $options['server'] : '127.0.0.1');
+    $this->port = (isset($options['port']) ? $options['port'] : 11211);
+    $this->provider = $memcache;
   }
 
   /**
@@ -49,7 +49,7 @@ class Memcache extends StorageAbstract implements StorageInterface {
    * @throws \Kemist\Cache\Exception
    */
   public function init() {
-    return $this->_provider->connect($this->_server, $this->_port);
+    return $this->provider->connect($this->server, $this->port);
   }
 
   /**
@@ -60,7 +60,7 @@ class Memcache extends StorageAbstract implements StorageInterface {
    * @return bool
    */
   public function exist($name) {
-    if ($this->_provider->get($this->_prefix . $name)) {
+    if ($this->provider->get($this->prefix . $name)) {
       return true;
     }
     return false;
@@ -76,14 +76,14 @@ class Memcache extends StorageAbstract implements StorageInterface {
    * @return bool
    */
   public function put($name, $val, $compressed = false) {
-    $real_name = $this->_prefix . $name;
+    $real_name = $this->prefix . $name;
     $ret = true;
-    if ($compressed && $this->_provider->replace($real_name, $val, 2) == false) {
-      $ret = $this->_provider->set($real_name, $val, 2);
-    } elseif ($this->_provider->replace($real_name, $val) == false) {
-      $ret = $this->_provider->set($real_name, $val);
+    if ($compressed && $this->provider->replace($real_name, $val, 2) == false) {
+      $ret = $this->provider->set($real_name, $val, 2);
+    } elseif ($this->provider->replace($real_name, $val) == false) {
+      $ret = $this->provider->set($real_name, $val);
     }
-    $ret ? $this->_storeName($name) : null;
+    $ret ? $this->storeName($name) : null;
     return $ret;
   }
 
@@ -93,7 +93,7 @@ class Memcache extends StorageAbstract implements StorageInterface {
    * @return type
    */
   public function __destruct() {
-    return is_object($this->_provider) ? $this->_provider->close() : null;
+    return is_object($this->provider) ? $this->provider->close() : null;
   }
 
 }

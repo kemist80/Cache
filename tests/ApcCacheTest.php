@@ -1,10 +1,10 @@
 <?php
 
-use Kemist\Cache\Storage\Apc;
+use Kemist\Cache\Storage\ApcStorage;
 
 class ApcCacheTest extends \PHPUnit_Framework_TestCase {
 
-  protected function _getApc() {
+  protected function getApc() {
     $apc = $this->getMock('Kemist\Cache\Storage\ApcObject');
     $apc->expects($this->any())
             ->method('put')
@@ -14,30 +14,30 @@ class ApcCacheTest extends \PHPUnit_Framework_TestCase {
   }
 
   public function testInit() {
-    $apc = $this->_getApc();
-    $cache = new Apc($apc);
+    $apc = $this->getApc();
+    $cache = new ApcStorage($apc);
     $init = $cache->init();
     $this->assertTrue($init);
   }
 
   public function testNotExistingVariable() {
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $var = $cache->exist('foo');
     $this->assertFalse($var);
   }
 
   public function testExistingVariable() {
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('get')
             ->will($this->returnValue(true))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $cache->put('test_variable', 1);
     $var = $cache->exist('test_variable');
     $this->assertTrue($var);
@@ -45,36 +45,36 @@ class ApcCacheTest extends \PHPUnit_Framework_TestCase {
 
   public function testReadBackCachedVariable() {
     $test = 1;
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('get')
             ->will($this->returnValue($test))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $cache->put('test_variable', $test);
     $var = $cache->get('test_variable');
     $this->assertEquals($var, $test);
   }
 
   public function testDeleteVariable() {
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $cache->put('test_variable', 1);
     $cache->clear('test_variable');
     $this->assertFalse($cache->exist('test_variable'));
   }
 
   public function testFlushCache() {
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->any())
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $cache->put('test_variable1', 1);
     $cache->put('test_variable2', 2);
     $cache->clear();
@@ -84,12 +84,12 @@ class ApcCacheTest extends \PHPUnit_Framework_TestCase {
 
   public function testReadBackCompressedVariable() {
     $test = 'test text';
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('get')
             ->will($this->returnValue($test))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
 
     $cache->put('test_variable', $test, true);
     $var = $cache->get('test_variable', true);
@@ -98,24 +98,24 @@ class ApcCacheTest extends \PHPUnit_Framework_TestCase {
 
   public function testReadBackCompressedFailure() {
     $test = 'test text';
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('get')
             ->will($this->returnValue(false))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $cache->put('test_variable', $test, true);
     $var = $cache->get('test_variable');
     $this->assertNotEquals($var, $test);
   }
 
   public function testInfo() {
-    $apc = $this->_getApc();
+    $apc = $this->getApc();
     $apc->expects($this->once())
             ->method('info')
             ->will($this->returnValue(array()))
     ;
-    $cache = new Apc($apc);
+    $cache = new ApcStorage($apc);
     $var = $cache->info(true);
     $this->assertArrayHasKey('CACHE_HITS', $var);
   }

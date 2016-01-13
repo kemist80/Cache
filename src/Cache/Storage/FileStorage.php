@@ -3,33 +3,33 @@
 namespace Kemist\Cache\Storage;
 
 /**
- * File Storage object for file based cache
+ * FileStorage object for file based cache
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.12
+ * @version 1.1.3
  */
-class File extends StorageAbstract implements StorageInterface {
+class FileStorage extends AbstractStorage implements StorageInterface {
 
   /**
    * Cache file extension
    * 	 	
    * @var int
    */
-  protected $_extension = 'kcf';
+  protected $extension = 'kcf';
 
   /**
    * Cache file locking
    * 	 	
    * @var bool
    */
-  protected $_file_locking = true;
+  protected $file_locking = true;
 
   /**
    *
    * @var type 
    */
-  protected $_cache_dir;
+  protected $cache_dir;
 
   /**
    * Constructor
@@ -46,9 +46,9 @@ class File extends StorageAbstract implements StorageInterface {
     if (substr($options['cache_dir'], -1, 1) != '/') {
       $options['cache_dir'].='/';
     }
-    $this->_cache_dir = $options['cache_dir'];
-    $this->_extension = (isset($options['extension']) ? $options['extension'] : 'kcf');
-    $this->_file_locking = (isset($options['file_locking']) ? $options['file_locking'] : true);
+    $this->cache_dir = $options['cache_dir'];
+    $this->extension = (isset($options['extension']) ? $options['extension'] : 'kcf');
+    $this->file_locking = (isset($options['file_locking']) ? $options['file_locking'] : true);
   }
 
   /**
@@ -59,7 +59,7 @@ class File extends StorageAbstract implements StorageInterface {
    * @throws \Kemist\Cache\Exception
    */
   public function init() {
-    if (!is_writable($this->_cache_dir)) {
+    if (!is_writable($this->cache_dir)) {
       throw new \Kemist\Cache\Exception("Cache directory is not writable!");
     }
     return true;
@@ -73,7 +73,7 @@ class File extends StorageAbstract implements StorageInterface {
    * @return bool
    */
   public function exist($name) {
-    return file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension);
+    return file_exists($this->cache_dir . '.' . $name . '.' . $this->extension);
   }
 
   /**
@@ -85,12 +85,12 @@ class File extends StorageAbstract implements StorageInterface {
    */
   public function clear($name = '') {
     if ($name == '') {
-      foreach ($this->_getAllCacheFiles() as $file) {
-        unlink($this->_cache_dir . $file);
+      foreach ($this->getAllCacheFiles() as $file) {
+        unlink($this->cache_dir . $file);
       }
       return true;
-    } elseif (file_exists($this->_cache_dir . '.' . $name . '.' . $this->_extension)) {
-      unlink($this->_cache_dir . '.' . $name . '.' . $this->_extension);
+    } elseif (file_exists($this->cache_dir . '.' . $name . '.' . $this->extension)) {
+      unlink($this->cache_dir . '.' . $name . '.' . $this->extension);
       return true;
     }
 
@@ -109,14 +109,14 @@ class File extends StorageAbstract implements StorageInterface {
   public function put($name, $val, $compressed = false) {
     $ret = false;
 
-    if (false !== $f = fopen($this->_cache_dir . '.' . $name . '.' . $this->_extension, 'wb')) {
-      if ($this->_lockFile($f, true)) {
+    if (false !== $f = fopen($this->cache_dir . '.' . $name . '.' . $this->extension, 'wb')) {
+      if ($this->lockFile($f, true)) {
         $ret = fputs($f, ($compressed ? gzcompress($val) : $val));
-        $this->_unlockFile($f);
+        $this->unlockFile($f);
       }
 
       fclose($f);
-      $ret ? $this->_storeName($name) : null;
+      $ret ? $this->storeName($name) : null;
     }
 
     return $ret;
@@ -131,7 +131,7 @@ class File extends StorageAbstract implements StorageInterface {
    * @return mixed
    */
   public function get($name, $compressed = false) {
-    $filename = $this->_cache_dir . '.' . $name . '.' . $this->_extension;
+    $filename = $this->cache_dir . '.' . $name . '.' . $this->extension;
     if (!file_exists($filename)) {
       $this->miss();
       return false;
@@ -139,17 +139,17 @@ class File extends StorageAbstract implements StorageInterface {
 
     $ret = false;
     if (false !== $f = fopen($filename, "rb")) {
-      if ($this->_lockFile($f)) {
+      if ($this->lockFile($f)) {
         $temp = '';
         while (!feof($f)) {
           $temp .= fread($f, 8192);
         }
-        $this->_unlockFile($f);
+        $this->unlockFile($f);
         $this->hit();
         $ret = ($compressed ? gzuncompress($temp) : $temp);
       }
       fclose($f);
-      $ret ? $this->_storeName($name) : null;
+      $ret ? $this->storeName($name) : null;
     }
 
     return $ret;
@@ -163,8 +163,8 @@ class File extends StorageAbstract implements StorageInterface {
    * 
    * @return bool
    */
-  protected function _lockFile($f, $write = false) {
-    if (!$this->_file_locking) {
+  protected function lockFile($f, $write = false) {
+    if (!$this->file_locking) {
       return true;
     }
     return ($write ? flock($f, LOCK_EX) : flock($f, LOCK_SH));
@@ -177,8 +177,8 @@ class File extends StorageAbstract implements StorageInterface {
    * 
    * @return bool
    */
-  protected function _unlockFile($f) {
-    if (!$this->_file_locking) {
+  protected function unlockFile($f) {
+    if (!$this->file_locking) {
       return true;
     }
     return flock($f, LOCK_UN);
@@ -194,15 +194,15 @@ class File extends StorageAbstract implements StorageInterface {
   public function info($get_fields = false) {
     $ret = array();
     $ret['CACHE_TYPE'] = 'File';
-    $ret['CACHE_HITS'] = $this->_hits;
-    $ret['CACHE_MISSES'] = $this->_misses;
+    $ret['CACHE_HITS'] = $this->hits;
+    $ret['CACHE_MISSES'] = $this->misses;
     $fields = array();
 
-    foreach ($this->_getAllCacheFiles() as $file) {
-      $name = basename($file, '.' . $this->_extension);
-      $ret[$name]['size'] = filesize(($this->_cache_dir . $file));
-      $ret[$name]['last_modified'] = date('Y.m.d. H:i:s', filemtime($this->_cache_dir . $file));
-      $ret[$name]['last_accessed'] = date('Y.m.d. H:i:s', fileatime($this->_cache_dir . $file));
+    foreach ($this->getAllCacheFiles() as $file) {
+      $name = basename($file, '.' . $this->extension);
+      $ret[$name]['size'] = filesize(($this->cache_dir . $file));
+      $ret[$name]['last_modified'] = date('Y.m.d. H:i:s', filemtime($this->cache_dir . $file));
+      $ret[$name]['last_accessed'] = date('Y.m.d. H:i:s', fileatime($this->cache_dir . $file));
       $fields[] = $name;
     }
 
@@ -221,11 +221,11 @@ class File extends StorageAbstract implements StorageInterface {
    * 
    * @return array
    */
-  protected function _getAllCacheFiles() {
+  protected function getAllCacheFiles() {
     $files = array();
-    foreach (scandir($this->_cache_dir) as $file) {
+    foreach (scandir($this->cache_dir) as $file) {
       $temp = explode('.', $file);
-      if (array_pop($temp) == $this->_extension) {
+      if (array_pop($temp) == $this->extension) {
         $files[] = $file;
       }
     }

@@ -13,7 +13,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * Cache info data
    * @var array 
    */
-  protected $_data = array();
+  protected $data = array();
 
   /**
    * Constructor
@@ -21,7 +21,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param array $data
    */
   public function __construct(array $data = array()) {
-    $this->_data = $data;
+    $this->data = $data;
   }
 
   /**
@@ -31,7 +31,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return bool
    */
   public function offsetExists($offset) {
-    return isset($this->_data[$offset]);
+    return isset($this->data[$offset]);
   }
 
   /**
@@ -41,7 +41,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return mixed
    */
   public function offsetGet($offset) {
-    return $this->_data[$offset];
+    return $this->data[$offset];
   }
 
   /**
@@ -51,7 +51,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param mixed $value
    */
   public function offsetSet($offset, $value) {
-    $this->_data[$offset] = $value;
+    $this->data[$offset] = $value;
   }
 
   /**
@@ -60,7 +60,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param string $offset
    */
   public function offsetUnset($offset) {
-    unset($this->_data[$offset]);
+    unset($this->data[$offset]);
   }
 
   /**
@@ -69,7 +69,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return \ArrayIterator
    */
   public function getIterator() {
-    return new \ArrayIterator($this->_data);
+    return new \ArrayIterator($this->data);
   }
 
   /**
@@ -83,7 +83,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
       $item_names = array($item_names);
     }
     foreach ($item_names as $item_name) {
-      $this->_data[$name][$item_name] = time();
+      $this->data[$name][$item_name] = time();
     }
   }
 
@@ -98,16 +98,16 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return string|int|bool
    */
   public function getItem($name, $item_name, $type = 'int', $format = 'U') {
-    if (!isset($this->_data[$name])) {
+    if (!isset($this->data[$name])) {
       return false;
     }
     switch ($type) {
       case 'date':
-        return isset($this->_data[$name][$item_name]) ? date($format, $this->_data[$name][$item_name]) : null;
+        return isset($this->data[$name][$item_name]) ? date($format, $this->data[$name][$item_name]) : null;
       case 'int':
-        return (int) $this->_getItemOrDefault($name, $item_name, 0);
+        return (int) $this->getItemOrDefault($name, $item_name, 0);
       default:
-        return $this->_getItemOrDefault($name, $item_name);
+        return $this->getItemOrDefault($name, $item_name);
     }
   }
 
@@ -120,8 +120,8 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * 
    * @return mixed
    */
-  protected function _getItemOrDefault($name, $item_name, $default = null) {
-    return isset($this->_data[$name][$item_name]) ? $this->_data[$name][$item_name] : $default;
+  protected function getItemOrDefault($name, $item_name, $default = null) {
+    return isset($this->data[$name][$item_name]) ? $this->data[$name][$item_name] : $default;
   }
 
   /**
@@ -132,7 +132,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param mixed $value
    */
   public function setItem($name, $item, $value) {
-    $this->_data[$name][$item] = $value;
+    $this->data[$name][$item] = $value;
   }
 
   /**
@@ -142,7 +142,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param string $item_name
    */
   public function increaseItem($name, $item_name) {
-    $this->_data[$name][$item_name] = (isset($this->_data[$name][$item_name]) && is_int($this->_data[$name][$item_name]) ? ++$this->_data[$name][$item_name] : 1);
+    $this->data[$name][$item_name] = (isset($this->data[$name][$item_name]) && is_int($this->data[$name][$item_name]) ? ++$this->data[$name][$item_name] : 1);
   }
 
   /**
@@ -153,7 +153,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return array
    */
   public function getData($name = '') {
-    return $name == '' ? $this->_data : (isset($this->_data[$name]) ? $this->_data[$name] : null);
+    return $name == '' ? $this->data : (isset($this->data[$name]) ? $this->data[$name] : null);
   }
 
   /**
@@ -162,7 +162,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return array
    */
   public function getKeys() {
-    return array_keys($this->_data);
+    return array_keys($this->data);
   }
 
   /**
@@ -171,7 +171,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param string $name
    */
   public function createData($name) {
-    $this->_data[$name] = array(
+    $this->data[$name] = array(
         'last_read' => null,
         'read_count' => 0,
         'tags' => array()
@@ -185,8 +185,8 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param string $name
    */
   public function deleteData($name) {
-    if (isset($this->_data[$name])) {
-      unset($this->_data[$name]);
+    if (isset($this->data[$name])) {
+      unset($this->data[$name]);
     }
   }
 
@@ -197,7 +197,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param array $data
    */
   public function appendData($name, array $data) {
-    $this->_data[$name] = array_merge($this->_data[$name], $data);
+    $this->data[$name] = array_merge($this->data[$name], $data);
   }
 
   /**
@@ -206,7 +206,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @param array $data
    */
   public function setData(array $data = array()) {
-    $this->_data = $data;
+    $this->data = $data;
   }
 
   /**
@@ -218,7 +218,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return string
    */
   public function getExpiry($name, $format = 'U') {
-    return isset($this->_data[$name]['expiry']) ? ($this->_data[$name]['expiry'] == 0 ? 0 : date($format, $this->_data[$name]['expiry'])) : null;
+    return isset($this->data[$name]['expiry']) ? ($this->data[$name]['expiry'] == 0 ? 0 : date($format, $this->data[$name]['expiry'])) : null;
   }
 
   /**
@@ -230,7 +230,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    */
   public function filterByTags(array $tags) {
     $ret = array();
-    foreach ($this->_data as $key => $info) {
+    foreach ($this->data as $key => $info) {
       if (count(array_intersect($tags, $info['tags'])) > 0) {
         $ret[] = $key;
       }
