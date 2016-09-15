@@ -157,8 +157,8 @@ class Cache {
     }
 
     $this->init();
-    $secret = $this->encryptKey($name);
-    return ($this->storage->has($secret) && ($name == $this->infoKey || isset($this->info[$name])));
+    $finalKey = $this->encryptKey($name);
+    return ($this->storage->has($finalKey) && ($name == $this->infoKey || isset($this->info[$name])));
   }
 
   /**
@@ -174,8 +174,8 @@ class Cache {
     }
 
     $this->init();
-    $secret = ($name != '' ? $this->encryptKey($name) : $name);
-    $ret = $this->storage->delete($secret);
+    $finalKey = ($name != '' ? $this->encryptKey($name) : $name);
+    $success = $this->storage->delete($finalKey);
 
     if ($name == '') {
       $this->info = new Info();
@@ -183,7 +183,7 @@ class Cache {
       unset($this->info[$name]);
     }
 
-    return $ret;
+    return $success;
   }
 
   /**
@@ -212,9 +212,9 @@ class Cache {
     }
 
     $this->init();
-    $secret = $this->encryptKey($name);
+    $finalKey = $this->encryptKey($name);
     $data = $this->encode($val, $storeMethod);
-    if (false !== $ret = $this->storage->store($secret, $data, $compressed)) {
+    if (false !== $success = $this->storage->store($finalKey, $data, $compressed)) {
       $expiry = ($expiry == 'never' ? 0 : $this->extractExpiryDate($expiry));
 
       if (!isset($this->info[$name])) {
@@ -231,7 +231,7 @@ class Cache {
       $this->info->increaseItem($name, 'write_count');
     }
 
-    return $ret;
+    return $success;
   }
 
   /**
@@ -272,11 +272,11 @@ class Cache {
     }
 
     list($compressed, $storeMethod) = $this->extractParameters($name);
-    $secret = $this->encryptKey($name);
-    $raw = $this->storage->get($secret, $compressed);
-    $ret = $this->decode($raw, $storeMethod);
+    $finalKey = $this->encryptKey($name);
+    $raw = $this->storage->get($finalKey, $compressed);
+    $success = $this->decode($raw, $storeMethod);
 
-    if ($ret !== null) {
+    if ($success !== null) {
       $this->info->touchItem($name, array('last_access', 'last_read'));
       $this->info->increaseItem($name, 'read_count');
       $this->readKeys[] = $name;
@@ -285,7 +285,7 @@ class Cache {
       $this->info->deleteData($name);
     }
 
-    return $ret;
+    return $success;
   }
 
   /**
@@ -329,9 +329,9 @@ class Cache {
    * @return mixed
    */
   public function pull($name) {
-    $ret = $this->get($name);
+    $success = $this->get($name);
     $this->delete($name);
-    return $ret;
+    return $success;
   }
 
   /**
@@ -665,11 +665,11 @@ class Cache {
     $this->init();
     $this->prepareTags($tags);
     $filtered = (array) $this->info->filterByTags($tags);
-    $ret = array();
+    $success = array();
     foreach ($filtered as $key) {
-      $ret[$key] = $this->get($key);
+      $success[$key] = $this->get($key);
     }
-    return $ret;
+    return $success;
   }
 
   /**
@@ -685,9 +685,9 @@ class Cache {
     }
 
     $this->init();
-    $ret = $this->info->getItem($key, 'tags', 'array');
-    sort($ret);
-    return $ret;
+    $success = $this->info->getItem($key, 'tags', 'array');
+    sort($success);
+    return $success;
   }
 
   /**
