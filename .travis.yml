@@ -14,7 +14,7 @@ before_script:
 script: 
 - mkdir -p build/logs  
 - phpunit --verbose --coverage-clover build/logs/clover.xml
-- phpmd src text phpmd.xml
+- php vendor/bin/phpmd src text phpmd.xml
 
 after_script:
  - php vendor/bin/coveralls -v
