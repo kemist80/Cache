@@ -229,13 +229,13 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return array
    */
   public function filterByTags(array $tags) {
-    $ret = array();
+    $result = array();
     foreach ($this->data as $key => $info) {
       if (count(array_intersect($tags, $info['tags'])) > 0) {
-        $ret[] = $key;
+        $result[] = $key;
       }
     }
-    return $ret;
+    return $result;
   }
   
 }
