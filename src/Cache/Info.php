@@ -205,7 +205,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * 
    * @param array $data
    */
-  public function setData(array $data = array()) {
+  public function setData(array $data) {
     $this->data = $data;
   }
 
@@ -237,5 +237,5 @@ class Info implements \ArrayAccess, \IteratorAggregate {
     }
     return $ret;
   }
-
+  
 }

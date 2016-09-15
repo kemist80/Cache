@@ -10,6 +10,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * @package Kemist\Cache
  * 
  * @version 1.2.0
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class Cache {
 
@@ -178,7 +179,7 @@ class Cache {
     $success = $this->storage->delete($finalKey);
 
     if ($name == '') {
-      $this->info = new Info();
+      $this->info->setData(array());
     } elseif (isset($this->info[$name])) {
       unset($this->info[$name]);
     }
@@ -442,34 +443,6 @@ class Cache {
   }
 
   /**
-   * Gets expiry information of a cached value (0: never)
-   * 
-   * @param string $name Cache name
-   * @param string $format Date format
-   * 	 
-   * @return string
-   */
-  public function getExpiry($name, $format = 'U') {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-    $this->init();
-    return $this->info->getExpiry($name, $format);
-  }
-
-  /**
-   * Calculates Time To Live
-   * 
-   * @param string $name
-   * 
-   * @return int
-   */
-  public function getTTL($name) {
-    $expiry = $this->getExpiry($name);
-    return ($expiry > 0 ? (int) $expiry - (int) $this->getCreated($name) : 0);
-  }
-
-  /**
    * Modifies expiry by setting Time To Live
    * 
    * @param string $name
@@ -493,76 +466,6 @@ class Cache {
     if ($this->canModify($name)) {
       $this->info->setItem($name, 'expiry', $this->extractExpiryDate($expiry));
     }
-  }
-
-  /**
-   * Gets created (first write) time of a cached value
-   * 
-   * @param string $name Cache name
-   * @param string $format Date format
-   * 	 
-   * @return string
-   */
-  public function getCreated($name, $format = 'U') {
-    return $this->info->getItem($name, 'created', 'date', $format);
-  }
-
-  /**
-   * Gets last access (either read or write) time of a cached value
-   * 
-   * @param string $name Cache name
-   * @param string $format Date format
-   * 	 
-   * @return string
-   */
-  public function getLastAccess($name, $format = 'U') {
-    return $this->info->getItem($name, 'last_access', 'date', $format);
-  }
-
-  /**
-   * Gets last read time of a cached value
-   * 
-   * @param string $name Cache name
-   * @param string $format Date format
-   * 	 
-   * @return string
-   */
-  public function getLastRead($name, $format = 'U') {
-    return $this->info->getItem($name, 'last_read', 'date', $format);
-  }
-
-  /**
-   * Gets last write time of a cached value
-   * 
-   * @param string $name Cache name
-   * @param string $format Date format
-   * 	 
-   * @return string
-   */
-  public function getLastWrite($name, $format = 'U') {
-    return $this->info->getItem($name, 'last_write', 'date', $format);
-  }
-
-  /**
-   * Gets read count of a cached value
-   * 
-   * @param string $name Cache name
-   * 	 
-   * @return int
-   */
-  public function getReadCount($name) {
-    return $this->info->getItem($name, 'read_count', 'int');
-  }
-
-  /**
-   * Gets write count of a cached value
-   * 
-   * @param string $name Cache name
-   * 	 
-   * @return int
-   */
-  public function getWriteCount($name) {
-    return $this->info->getItem($name, 'write_count', 'int');
   }
 
   /**
@@ -796,6 +699,104 @@ class Cache {
    */
   protected function processDefault($default) {
     return ($default instanceof \Closure ? call_user_func($default) : $default);
+  }
+
+  /**
+   * Gets created (first write) time of a cached value
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getCreated($name, $format = 'U') {
+    return $this->info->getItem($name, 'created', 'date', $format);
+  }
+
+  /**
+   * Gets last access (either read or write) time of a cached value
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getLastAccess($name, $format = 'U') {
+    return $this->info->getItem($name, 'last_access', 'date', $format);
+  }
+
+  /**
+   * Gets last read time of a cached value
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getLastRead($name, $format = 'U') {
+    return $this->info->getItem($name, 'last_read', 'date', $format);
+  }
+
+  /**
+   * Gets last write time of a cached value
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getLastWrite($name, $format = 'U') {
+    return $this->info->getItem($name, 'last_write', 'date', $format);
+  }
+
+  /**
+   * Gets read count of a cached value
+   * 
+   * @param string $name Cache name
+   * 	 
+   * @return int
+   */
+  public function getReadCount($name) {
+    return $this->info->getItem($name, 'read_count', 'int');
+  }
+
+  /**
+   * Gets write count of a cached value
+   * 
+   * @param string $name Cache name
+   * 	 
+   * @return int
+   */
+  public function getWriteCount($name) {
+    return $this->info->getItem($name, 'write_count', 'int');
+  }
+
+  /**
+   * Gets expiry information of a cached value (0: never)
+   * 
+   * @param string $name Cache name
+   * @param string $format Date format
+   * 	 
+   * @return string
+   */
+  public function getExpiry($name, $format = 'U') {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+    $this->init();
+    return $this->info->getExpiry($name, $format);
+  }
+
+  /**
+   * Calculates Time To Live
+   * 
+   * @param string $name
+   * 
+   * @return int
+   */
+  public function getTTL($name) {
+    $expiry = $this->getExpiry($name);
+    return ($expiry > 0 ? (int) $expiry - (int) $this->getCreated($name) : 0);
   }
 
 }
