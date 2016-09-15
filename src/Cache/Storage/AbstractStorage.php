@@ -51,11 +51,12 @@ abstract class AbstractStorage {
   /**
    * Retrieves the content of $name cache
    * 	 
+   * @SuppressWarnings(PHPMD.UnusedFormalParameter)
    * @param string $name cache name
    *
    * @return mixed
    */
-  public function get($name) {
+  public function get($name, $compressed = false) {
     $ret = $this->provider->get($this->prefix . $name);
     if ($ret !== false) {
       $this->hit();

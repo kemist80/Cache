@@ -17,7 +17,7 @@ interface StorageInterface {
 
   public function store($name, $val, $compressed = false);
 
-  public function get($name);
+  public function get($name, $compressed = false);
 
   public function info($getFields = false);
 
