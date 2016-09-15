@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  *
  * @package Kemist\Cache
  * 
- * @version 1.0.1
+ * @version 1.0.2
  */
 class ApcObject {
 
@@ -50,7 +50,7 @@ class ApcObject {
    * 
    * @return bool
    */
-  public function put($name, $val) {
+  public function store($name, $val) {
     return apc_store($name, $val);
   }
 

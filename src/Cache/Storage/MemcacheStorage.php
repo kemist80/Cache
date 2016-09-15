@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  *
- * @version 1.1.2
+ * @version 1.1.3
  */
 class MemcacheStorage extends AbstractStorage implements StorageInterface {
 
@@ -27,7 +27,7 @@ class MemcacheStorage extends AbstractStorage implements StorageInterface {
    * Info method
    * @var string 
    */
-  protected $info_method = 'getStats';
+  protected $infoMethod = 'getStats';
 
   /**
    * Constructor
@@ -59,7 +59,7 @@ class MemcacheStorage extends AbstractStorage implements StorageInterface {
    *
    * @return bool
    */
-  public function exist($name) {
+  public function has($name) {
     if ($this->provider->get($this->prefix . $name)) {
       return true;
     }
@@ -75,16 +75,16 @@ class MemcacheStorage extends AbstractStorage implements StorageInterface {
    *
    * @return bool
    */
-  public function put($name, $val, $compressed = false) {
-    $real_name = $this->prefix . $name;
-    $ret = true;
-    if ($compressed && $this->provider->replace($real_name, $val, 2) == false) {
-      $ret = $this->provider->set($real_name, $val, 2);
-    } elseif ($this->provider->replace($real_name, $val) == false) {
-      $ret = $this->provider->set($real_name, $val);
+  public function store($name, $val, $compressed = false) {
+    $realName = $this->prefix . $name;
+    $success = true;
+    if ($compressed && $this->provider->replace($realName, $val, 2) == false) {
+      $success = $this->provider->set($realName, $val, 2);
+    } elseif ($this->provider->replace($realName, $val) == false) {
+      $success = $this->provider->set($realName, $val);
     }
-    $ret ? $this->storeName($name) : null;
-    return $ret;
+    $success ? $this->storeName($name) : null;
+    return $success;
   }
 
   /**
