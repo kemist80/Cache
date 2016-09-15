@@ -27,7 +27,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(false))
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
-    $var = $cache->exist('foo');
+    $var = $cache->has('foo');
     $this->assertFalse($var);
   }
 
@@ -38,8 +38,8 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(true))
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
-    $cache->put('test_variable', 1);
-    $var = $cache->exist('test_variable');
+    $cache->store('test_variable', 1);
+    $var = $cache->has('test_variable');
     $this->assertTrue($var);
   }
 
@@ -51,7 +51,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue($test))
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
-    $cache->put('test_variable', $test);
+    $cache->store('test_variable', $test);
     $var = $cache->get('test_variable');
     $this->assertEquals($var, $test);
   }
@@ -63,9 +63,9 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(false))
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
-    $cache->put('test_variable', 1);
-    $cache->clear('test_variable');
-    $this->assertFalse($cache->exist('test_variable'));
+    $cache->store('test_variable', 1);
+    $cache->delete('test_variable');
+    $this->assertFalse($cache->has('test_variable'));
   }
 
   public function testFlushCache() {
@@ -75,11 +75,11 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(false))
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
-    $cache->put('test_variable1', 1);
-    $cache->put('test_variable2', 2);
-    $cache->clear();
-    $this->assertFalse($cache->exist('test_variable1'));
-    $this->assertFalse($cache->exist('test_variable2'));
+    $cache->store('test_variable1', 1);
+    $cache->store('test_variable2', 2);
+    $cache->delete();
+    $this->assertFalse($cache->has('test_variable1'));
+    $this->assertFalse($cache->has('test_variable2'));
   }
 
   public function testReadBackCompressedVariable() {
@@ -91,7 +91,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
 
-    $cache->put('test_variable', $test, true);
+    $cache->store('test_variable', $test, true);
     $var = $cache->get('test_variable', true);
     $this->assertEquals($var, $test);
   }
@@ -104,7 +104,7 @@ class MemcacheCacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(false))
     ;
     $cache = new MemcacheStorage($memcache, array('server' => '127.0.0.1'));
-    $cache->put('test_variable', $test, true);
+    $cache->store('test_variable', $test, true);
     $var = $cache->get('test_variable');
     $this->assertNotEquals($var, $test);
   }

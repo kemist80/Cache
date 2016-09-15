@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.5
+ * @version 1.0.6
  */
 abstract class AbstractStorage {
 
@@ -40,7 +40,7 @@ abstract class AbstractStorage {
    * Info method
    * @var string 
    */
-  protected $info_method = 'info';
+  protected $infoMethod = 'info';
 
   /**
    * Key prefix to avoid collisions
@@ -51,21 +51,21 @@ abstract class AbstractStorage {
   /**
    * Retrieves the content of $name cache
    * 	 
+   * @SuppressWarnings(PHPMD.UnusedFormalParameter)
    * @param string $name cache name
-   * @param bool $compressed
    *
    * @return mixed
    */
   public function get($name, $compressed = false) {
-    $ret = $this->provider->get($this->prefix . $name);
-    if ($ret !== false) {
+    $value = $this->provider->get($this->prefix . $name);
+    if ($value !== false) {
       $this->hit();
       $this->storeName($name);
     } else {
       $this->miss();
     }
 
-    return $ret;
+    return $value;
   }
 
   /**
@@ -89,7 +89,7 @@ abstract class AbstractStorage {
    *
    * @return bool
    */
-  public function clear($name = '') {
+  public function delete($name = '') {
     if ($name == '') {
       return $this->provider->flush();
     } else {
@@ -100,26 +100,26 @@ abstract class AbstractStorage {
   /**
    * Retrieves information of Cache state
    * 
-   * @param bool $get_fields
+   * @param bool $getFields
    *  
    * @return array
    */
-  public function info($get_fields = false) {
-    $ret = array();
-    $classname = explode('\\', get_class($this));
-    $ret['CACHE_TYPE'] = end($classname);
-    $ret['CACHE_HITS'] = $this->hits;
-    $ret['CACHE_MISSES'] = $this->misses;
+  public function info($getFields = false) {
+    $info = array();
+    $className = explode('\\', get_class($this));
+    $info['CACHE_TYPE'] = end($className);
+    $info['CACHE_HITS'] = $this->hits;
+    $info['CACHE_MISSES'] = $this->misses;
 
-    $ret = array_merge($ret, call_user_func(array($this->provider, $this->info_method)));
+    $info = array_merge($info, call_user_func(array($this->provider, $this->infoMethod)));
 
-    if ($get_fields) {
+    if ($getFields) {
       foreach ($this->fields as $field) {
-        $ret['field_content'][$field] = $this->get($field);
+        $info['field_content'][$field] = $this->get($field);
       }
     }
 
-    return $ret;
+    return $info;
   }
 
   /**

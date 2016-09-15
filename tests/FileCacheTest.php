@@ -6,7 +6,7 @@ class FileCacheTest extends \PHPUnit_Framework_TestCase {
 
   public function tearDown() {
     $cache = $this->getFileCache();
-    $cache->clear();
+    $cache->delete();
     rmdir('temp');
   }
 
@@ -22,7 +22,7 @@ class FileCacheTest extends \PHPUnit_Framework_TestCase {
     $cache = new FileStorage();
     $var = is_dir(sys_get_temp_dir() . '/kemist_cache/');
     $this->assertTrue($var);
-    $cache->clear();
+    $cache->delete();
     rmdir(sys_get_temp_dir() . '/kemist_cache/');
   }
 
@@ -40,14 +40,14 @@ class FileCacheTest extends \PHPUnit_Framework_TestCase {
 
   public function testNotExistingVariable() {
     $cache = $this->getFileCache();
-    $var = $cache->exist('foo');
+    $var = $cache->has('foo');
     $this->assertFalse($var);
   }
 
   public function testExistingVariable() {
     $cache = $this->getFileCache();
-    $cache->put('test_variable1', 1);
-    $var = $cache->exist('test_variable1');
+    $cache->store('test_variable1', 1);
+    $var = $cache->has('test_variable1');
     $this->assertTrue($var);
   }
 
@@ -60,38 +60,38 @@ class FileCacheTest extends \PHPUnit_Framework_TestCase {
   public function testReadBackCachedVariable() {
     $cache = $this->getFileCache();
     $test = 1;
-    $cache->put('test_variable2', $test);
+    $cache->store('test_variable2', $test);
     $var = $cache->get('test_variable2');
     $this->assertEquals($var, $test);
   }
 
   public function testDeleteVariable() {
     $cache = $this->getFileCache();
-    $cache->put('test_variable3', 1);
-    $cache->clear('test_variable3');
-    $this->assertFalse($cache->exist('test_variable'));
+    $cache->store('test_variable3', 1);
+    $cache->delete('test_variable3');
+    $this->assertFalse($cache->has('test_variable'));
   }
 
   public function testDeleteNotExistingVariable() {
     $cache = $this->getFileCache();
-    $cache->put('test_variable4', 1);
-    $ret = $cache->clear('test_variable5');
+    $cache->store('test_variable4', 1);
+    $ret = $cache->delete('test_variable5');
     $this->assertFalse($ret);
   }
 
   public function testFlushCache() {
     $cache = $this->getFileCache();
-    $cache->put('test_variable6', 1);
-    $cache->put('test_variable7', 2);
-    $cache->clear();
-    $this->assertFalse($cache->exist('test_variable1'));
-    $this->assertFalse($cache->exist('test_variable2'));
+    $cache->store('test_variable6', 1);
+    $cache->store('test_variable7', 2);
+    $cache->delete();
+    $this->assertFalse($cache->has('test_variable1'));
+    $this->assertFalse($cache->has('test_variable2'));
   }
 
   public function testReadBackCompressedVariable() {
     $cache = $this->getFileCache();
     $test = 'test text';
-    $cache->put('test_variable8', $test, true);
+    $cache->store('test_variable8', $test, true);
     $var = $cache->get('test_variable8', true);
     $this->assertEquals($var, $test);
   }
@@ -99,7 +99,7 @@ class FileCacheTest extends \PHPUnit_Framework_TestCase {
   public function testReadBackCompressedFailure() {
     $cache = $this->getFileCache();
     $test = 'test text';
-    $cache->put('test_variable9', $test, true);
+    $cache->store('test_variable9', $test, true);
     $var = $cache->get('test_variable9');
     $this->assertNotEquals($var, $test);
   }
@@ -113,7 +113,7 @@ class FileCacheTest extends \PHPUnit_Framework_TestCase {
   public function testInfo() {
     $cache = $this->getFileCache();
     $cache->init();
-    $cache->put('test_variable10',1);
+    $cache->store('test_variable10',1);
     $var = $cache->info(true);
     $this->assertArrayHasKey('CACHE_HITS', $var);
   }

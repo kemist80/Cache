@@ -7,7 +7,7 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.9
+ * @version 1.0.10
  */
 class ApcStorage extends AbstractStorage implements StorageInterface {
 
@@ -39,7 +39,7 @@ class ApcStorage extends AbstractStorage implements StorageInterface {
    *
    * @return bool
    */
-  public function exist($name) {
+  public function has($name) {
     if ($this->provider->get($this->prefix . $name)) {
       return true;
     }
@@ -54,10 +54,10 @@ class ApcStorage extends AbstractStorage implements StorageInterface {
    *
    * @return bool
    */
-  public function put($name, $val, $compressed = false) {
-    $ret = $this->provider->put($this->prefix . $name, $val);
-    $ret ? $this->storeName($name) : null;
-    return $ret;
+  public function store($name, $val, $compressed = false) {
+    $success = $this->provider->store($this->prefix . $name, $val);
+    $success ? $this->storeName($name) : null;
+    return $success;
   }
 
 }

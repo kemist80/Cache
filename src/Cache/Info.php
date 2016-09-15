@@ -5,7 +5,7 @@ namespace Kemist\Cache;
 /**
  * Cache Info
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 class Info implements \ArrayAccess, \IteratorAggregate {
 
@@ -76,14 +76,14 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * Updates timestamp items in cache info
    * 
    * @param string $name
-   * @param array|string $item_names
+   * @param array|string $itemNames
    */
-  public function touchItem($name, $item_names = array()) {
-    if (!is_array($item_names)) {
-      $item_names = array($item_names);
+  public function touchItem($name, $itemNames = array()) {
+    if (!is_array($itemNames)) {
+      $itemNames = array($itemNames);
     }
-    foreach ($item_names as $item_name) {
-      $this->data[$name][$item_name] = time();
+    foreach ($itemNames as $itemName) {
+      $this->data[$name][$itemName] = time();
     }
   }
 
@@ -91,23 +91,23 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * Gets an item from cache info
    * 
    * @param string $name
-   * @param string $item_name
+   * @param string $itemName
    * @param string $type
    * @param string $format
    * 
    * @return string|int|bool
    */
-  public function getItem($name, $item_name, $type = 'int', $format = 'U') {
+  public function getItem($name, $itemName, $type = 'int', $format = 'U') {
     if (!isset($this->data[$name])) {
       return false;
     }
     switch ($type) {
       case 'date':
-        return isset($this->data[$name][$item_name]) ? date($format, $this->data[$name][$item_name]) : null;
+        return isset($this->data[$name][$itemName]) ? date($format, $this->data[$name][$itemName]) : null;
       case 'int':
-        return (int) $this->getItemOrDefault($name, $item_name, 0);
+        return (int) $this->getItemOrDefault($name, $itemName, 0);
       default:
-        return $this->getItemOrDefault($name, $item_name);
+        return $this->getItemOrDefault($name, $itemName);
     }
   }
 
@@ -115,13 +115,13 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * Gets an item value or default if not exists
    * 
    * @param string $name
-   * @param string $item_name
+   * @param string $itemName
    * @param mixed $default
    * 
    * @return mixed
    */
-  protected function getItemOrDefault($name, $item_name, $default = null) {
-    return isset($this->data[$name][$item_name]) ? $this->data[$name][$item_name] : $default;
+  protected function getItemOrDefault($name, $itemName, $default = null) {
+    return isset($this->data[$name][$itemName]) ? $this->data[$name][$itemName] : $default;
   }
 
   /**
@@ -139,10 +139,10 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * Inreases an item in cache info
    * 
    * @param string $name
-   * @param string $item_name
+   * @param string $itemName
    */
-  public function increaseItem($name, $item_name) {
-    $this->data[$name][$item_name] = (isset($this->data[$name][$item_name]) && is_int($this->data[$name][$item_name]) ? ++$this->data[$name][$item_name] : 1);
+  public function increaseItem($name, $itemName) {
+    $this->data[$name][$itemName] = (isset($this->data[$name][$itemName]) && is_int($this->data[$name][$itemName]) ? ++$this->data[$name][$itemName] : 1);
   }
 
   /**
@@ -205,7 +205,7 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * 
    * @param array $data
    */
-  public function setData(array $data = array()) {
+  public function setData(array $data) {
     $this->data = $data;
   }
 
@@ -229,13 +229,13 @@ class Info implements \ArrayAccess, \IteratorAggregate {
    * @return array
    */
   public function filterByTags(array $tags) {
-    $ret = array();
+    $result = array();
     foreach ($this->data as $key => $info) {
       if (count(array_intersect($tags, $info['tags'])) > 0) {
-        $ret[] = $key;
+        $result[] = $key;
       }
     }
-    return $ret;
+    return $result;
   }
-
+  
 }

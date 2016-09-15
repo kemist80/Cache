@@ -16,7 +16,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testInit() {
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->once())
@@ -31,7 +31,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testExpired() {
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->once())
@@ -46,7 +46,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testSuppressingStoreMethod() {
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->once())
@@ -65,7 +65,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(false)))
     ;
     $cache = new Cache($storage);
-    $cache->put('false_test', false);
+    $cache->store('false_test', false);
     $var = $cache->get('false_test');
     $this->assertFalse($var);
   }
@@ -87,7 +87,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testCacheSerialize() {
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     $info = $cache->getInfo();
     $this->assertEquals($info['test_variable']['store_method'], Cache::STORE_METHOD_SERIALIZE);
   }
@@ -95,7 +95,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testCacheJson() {
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, 0, Cache::STORE_METHOD_JSON);
+    $cache->store('test_variable', 1, false, 0, Cache::STORE_METHOD_JSON);
     $info = $cache->getInfo();
     $this->assertEquals($info['test_variable']['store_method'], Cache::STORE_METHOD_JSON);
   }
@@ -107,7 +107,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     $ret = $cache->get('test_variable');
     $this->assertEquals($ret, 1);
   }
@@ -117,7 +117,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
 
     $cache = new Cache($storage);
     $exp = time() + 86400;
-    $cache->put('test_variable', 1, false, 86400);
+    $cache->store('test_variable', 1, false, 86400);
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $exp);
   }
@@ -126,7 +126,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     $storage = $this->getStorage();
 
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, 'never');
+    $cache->store('test_variable', 1, false, 'never');
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, 0);
   }
@@ -136,7 +136,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
 
     $cache = new Cache($storage);
     $timestamp = time() + 86400;
-    $cache->put('test_variable', 1, false, $timestamp);
+    $cache->store('test_variable', 1, false, $timestamp);
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $timestamp);
   }
@@ -146,7 +146,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
 
     $cache = new Cache($storage);
     $timestamp = time() + 3600;
-    $cache->put('test_variable', 1, false, '1hour');
+    $cache->store('test_variable', 1, false, '1hour');
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $timestamp);
   }
@@ -156,7 +156,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
 
     $cache = new Cache($storage);
     $timestamp = time() + (86400 * 2);
-    $cache->put('test_variable', 1, false, '2days');
+    $cache->store('test_variable', 1, false, '2days');
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, $timestamp);
   }
@@ -167,7 +167,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     $cache = new Cache($storage);
     $ret = true;
     try {
-      $cache->put('test_variable', 1, false, 'iNvAlId DaTeStRiNg');
+      $cache->store('test_variable', 1, false, 'iNvAlId DaTeStRiNg');
     } catch (\InvalidArgumentException $ex) {
       $ret = false;
     }
@@ -179,7 +179,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     $storage = $this->getStorage();
 
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, '1999-05-08');
+    $cache->store('test_variable', 1, false, '1999-05-08');
     $expiry = $cache->getExpiry('test_variable');
     $this->assertEquals($expiry, 0);
   }
@@ -187,9 +187,9 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testWriteCount() {
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
-    $cache->put('test_variable', 1);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
+    $cache->store('test_variable', 1);
+    $cache->store('test_variable', 1);
 
     $write = $cache->getWriteCount('test_variable');
     $this->assertEquals($write, 3);
@@ -202,7 +202,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     $cache->get('test_variable');
     $cache->get('test_variable');
     $cache->get('test_variable');
@@ -218,9 +218,9 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     ;
     $cache = new Cache($storage);
     $time = time();
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     sleep(1);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
 
     $created = $cache->getCreated('test_variable');
     $this->assertEquals($created, $time);
@@ -233,7 +233,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     sleep(1);
     $time = time();
     $cache->get('test_variable');
@@ -249,7 +249,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     sleep(1);
     $time = time();
     $cache->get('test_variable');
@@ -265,10 +265,10 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     sleep(1);
     $time = time();
-    $cache->put('test_variable', 2);
+    $cache->store('test_variable', 2);
 
     $last_access = $cache->getLastWrite('test_variable');
     $this->assertEquals($last_access, $time);
@@ -301,8 +301,8 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable1', 1);
-    $cache->put('test_variable2', 1);
+    $cache->store('test_variable1', 1);
+    $cache->store('test_variable2', 1);
     $cache->get('test_variable1');
 
     $keys = $cache->getKeys();
@@ -316,8 +316,8 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable1', 1);
-    $cache->put('test_variable2', 2);
+    $cache->store('test_variable1', 1);
+    $cache->store('test_variable2', 2);
     $cache->get('test_variable1');
 
     $keys = $cache->getReadKeys();
@@ -348,7 +348,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     $cache = new Cache($storage);
     $cache->init();
     $cache->setEnabled(false);
-    $this->assertFalse($cache->exist('_system.info'));
+    $this->assertFalse($cache->has('_system.info'));
   }
 
   public function testDisabledGet() {
@@ -378,25 +378,25 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testDisabledPut() {
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
     $cache->setEnabled(false);
-    $this->assertFalse($cache->put('test_variable', 1));
+    $this->assertFalse($cache->store('test_variable', 1));
   }
 
   public function testDisabledClear() {
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('clear')
+            ->method('delete')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
     $cache->setEnabled(false);
-    $this->assertFalse($cache->clear('test_variable'));
+    $this->assertFalse($cache->delete('test_variable'));
   }
 
   public function testDisabledGetHits() {
@@ -430,7 +430,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testDisabledGetExpiry() {
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, 86400);
+    $cache->store('test_variable', 1, false, 86400);
     $cache->setEnabled(false);
     $this->assertFalse($cache->getExpiry('test_variable'));
   }
@@ -438,11 +438,11 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testSetExpiry() {
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, 86400);
+    $cache->store('test_variable', 1, false, 86400);
     $cache->setExpiry('test_variable',0);
     $this->assertEquals($cache->getExpiry('test_variable'),0);
   }
@@ -459,7 +459,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     $storage = $this->getStorage();
 
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, 86400);
+    $cache->store('test_variable', 1, false, 86400);
     $expiry = $cache->getExpiry('test_variable2');
     $this->assertNull($expiry);
   }
@@ -467,9 +467,9 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testWriteCountNotExisting() {
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
-    $cache->put('test_variable', 1);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
+    $cache->store('test_variable', 1);
+    $cache->store('test_variable', 1);
 
     $write = $cache->getWriteCount('test_variable2');
     $this->assertFalse($write);
@@ -482,7 +482,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     $cache->get('test_variable');
     $cache->get('test_variable');
     $cache->get('test_variable');
@@ -497,7 +497,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
 
     $created = $cache->getCreated('test_variable2');
     $this->assertFalse($created);
@@ -510,7 +510,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
             ->will($this->returnValue(serialize(1)))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     sleep(1);
     $cache->get('test_variable');
 
@@ -534,10 +534,10 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($default, 'default');
   }
 
-  public function testGetOrPut() {
+  public function testGetOrStore() {
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $default = $cache->getOrPut('test_variable', 'default');
+    $default = $cache->getOrStore('test_variable', 'default');
     $this->assertEquals($default, 'default');
     $info = $cache->getInfo();
     $this->assertArrayHasKey('test_variable', $info);
@@ -554,18 +554,18 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testGetTTL(){
     $storage = $this->getStorage();
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1, false, 300);
+    $cache->store('test_variable', 1, false, 300);
     $this->assertEquals($cache->getTTL('test_variable'), 300);
   }
   
   public function testSetTTL(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
-    $cache->put('test_variable', 1);
+    $cache->store('test_variable', 1);
     $cache->setTTL('test_variable', 20);
     $this->assertEquals($cache->getTTL('test_variable'), 20);
   }
@@ -583,54 +583,54 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testPutTagged(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
     $tags=array('test1','test2');
-    $cache->putTagged('tagged','value',$tags);
+    $cache->storeTagged('tagged','value',$tags);
     $this->assertEquals($cache->getTags('tagged'), $tags);
   }
   
   public function testPutTaggedString(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
-    $cache->putTagged('tagged','value','test1');
+    $cache->storeTagged('tagged','value','test1');
     $this->assertEquals($cache->getTags('tagged'), array('test1'));
   }
   
   public function testGetTagged(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
     $tags=array('test1','test2');
-    $cache->putTagged('tagged','value',$tags);
+    $cache->storeTagged('tagged','value',$tags);
     $this->assertEquals(array_keys($cache->getTagged($tags)), array('tagged'));
   }
   
   public function testSetTags(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
-    $cache->putTagged('tagged','value',array('test1','test2'));
+    $cache->storeTagged('tagged','value',array('test1','test2'));
     $new_tags=array('test3','test4');
     $cache->setTags('tagged',$new_tags);
     $this->assertEquals($cache->getTags('tagged'), $new_tags);
@@ -639,16 +639,16 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testAddTags(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
-    $cache->putTagged('tagged','value',array('test1','test2'));
+    $cache->storeTagged('tagged','value',array('test1','test2'));
     $cache->addTags('tagged',array('test3','test4'));
     $this->assertEquals($cache->getTags('tagged'), array('test1','test2','test3','test4'));
   }    
@@ -656,38 +656,38 @@ class CacheTest extends \PHPUnit_Framework_TestCase {
   public function testClearTagged(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->any())
-            ->method('clear')
+            ->method('delete')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
-    $cache->putTagged('tagged','value',array('test1','test2'));
-    $cache->clearTagged('test1');
+    $cache->storeTagged('tagged','value',array('test1','test2'));
+    $cache->deleteTagged('test1');
     $this->assertEquals($cache->getTagged('test1'), array());
   }   
 
   public function testGetAllTags(){
     $storage = $this->getStorage();
     $storage->expects($this->any())
-            ->method('exist')
+            ->method('has')
             ->will($this->returnValue(true))
     ;
     $storage->expects($this->any())
-            ->method('put')
+            ->method('store')
             ->will($this->returnValue(true))
     ;
     $cache = new Cache($storage);
     $cache->init();
-    $cache->putTagged('tagged1','value1',array('test1','test2'));
-    $cache->putTagged('tagged2','value2',array('test1','test3','test4'));    
+    $cache->storeTagged('tagged1','value1',array('test1','test2'));
+    $cache->storeTagged('tagged2','value2',array('test1','test3','test4'));    
     $this->assertEquals($cache->getAllTags(), array('test1','test2','test3','test4'));
   }
 }

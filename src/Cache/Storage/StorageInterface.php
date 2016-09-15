@@ -7,19 +7,19 @@ namespace Kemist\Cache\Storage;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.0.3
+ * @version 1.0.4
  */
 interface StorageInterface {
 
-  public function exist($name);
+  public function has($name);
 
-  public function clear($name = '');
+  public function delete($name = '');
 
-  public function put($name, $val, $compressed = false);
+  public function store($name, $val, $compressed = false);
 
   public function get($name, $compressed = false);
 
-  public function info($get_fields = false);
+  public function info($getFields = false);
 
   public function init();
 

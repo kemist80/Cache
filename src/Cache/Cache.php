@@ -9,7 +9,8 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.1.9
+ * @version 1.2.0
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class Cache {
 
@@ -29,7 +30,7 @@ class Cache {
    * Key name encryption
    * @var bool 
    */
-  protected $encrypt_keys = true;
+  protected $encryptKeys = true;
 
   /**
    * Cache values information
@@ -41,13 +42,13 @@ class Cache {
    * Read key names
    * @var array 
    */
-  protected $read_keys = array();
+  protected $readKeys = array();
 
   /**
    * System reserved info key
    * @var string 
    */
-  protected $info_key = '_system.info';
+  protected $infoKey = '_system.info';
 
   /**
    * Initialised (-1: not yet, 0: in progress, 1: initialised)
@@ -67,7 +68,7 @@ class Cache {
   public function __construct(StorageInterface $storage, array $options = array()) {
     $this->storage = $storage;
     $this->enabled = (isset($options['enabled']) ? $options['enabled'] : true);
-    $this->encrypt_keys = (isset($options['encrypt_keys']) ? $options['encrypt_keys'] : true);
+    $this->encryptKeys = (isset($options['encrypt_keys']) ? $options['encrypt_keys'] : true);
     $this->info = new Info();
   }
 
@@ -83,8 +84,8 @@ class Cache {
     $this->initialised = 0;
     $this->storage->init();
 
-    if ($this->exist($this->info_key)) {
-      $info = (array) $this->getOrPut($this->info_key, array());
+    if ($this->has($this->infoKey)) {
+      $info = (array) $this->getOrStore($this->infoKey, array());
       array_walk($info, array($this, 'handleExpiration'));
       $this->info->setData($info);
     }
@@ -103,10 +104,10 @@ class Cache {
   protected function handleExpiration($data, $key) {
     if (!isset($data['expiry']) || $data['expiry'] == 0) {
       return true;
-    } elseif (!$this->exist($key)) {
+    } elseif (!$this->has($key)) {
       unset($this->info[$key]);
     } elseif (time() > $data['expiry']) {
-      $this->clear($key);
+      $this->delete($key);
     }
   }
 
@@ -151,14 +152,14 @@ class Cache {
    *
    * @return bool
    */
-  public function exist($name) {
+  public function has($name) {
     if (!$this->isEnabled()) {
       return false;
     }
 
     $this->init();
-    $secret = $this->encryptKey($name);
-    return ($this->storage->exist($secret) && ($name == $this->info_key || isset($this->info[$name])));
+    $finalKey = $this->encryptKey($name);
+    return ($this->storage->has($finalKey) && ($name == $this->infoKey || isset($this->info[$name])));
   }
 
   /**
@@ -168,33 +169,22 @@ class Cache {
    *
    * @return bool
    */
-  public function clear($name = '') {
+  public function delete($name = '') {
     if (!$this->isEnabled()) {
       return false;
     }
 
     $this->init();
-    $secret = ($name != '' ? $this->encryptKey($name) : $name);
-    $ret = $this->storage->clear($secret);
+    $finalKey = ($name != '' ? $this->encryptKey($name) : $name);
+    $success = $this->storage->delete($finalKey);
 
     if ($name == '') {
-      $this->info = new Info();
+      $this->info->setData(array());
     } elseif (isset($this->info[$name])) {
       unset($this->info[$name]);
     }
 
-    return $ret;
-  }
-
-  /**
-   * Alias for deleting the specified cache or each one if '' given
-   * 	 
-   * @param string $name cache name
-   *
-   * @return bool
-   */
-  public function delete($name = '') {
-    return $this->clear($name);
+    return $success;
   }
 
   /**
@@ -203,29 +193,29 @@ class Cache {
    * @return bool
    */
   public function flush() {
-    return $this->clear();
+    return $this->delete();
   }
 
   /**
-   * Saves the variable to the $name cache
+   * Stores the variable to the $name cache
    * 	 
    * @param string $name cache name
    * @param mixed $val variable to be stored
    * @param bool $compressed Compressed storage
    * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
-   * @param string $store_method Storing method (serialize|json)	 	 
+   * @param string $storeMethod Storing method (serialize|json)	 	 
    *
    * @return bool
    */
-  public function put($name, $val, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
+  public function store($name, $val, $compressed = false, $expiry = 0, $storeMethod = self::STORE_METHOD_SERIALIZE) {
     if (!$this->isEnabled()) {
       return false;
     }
 
     $this->init();
-    $secret = $this->encryptKey($name);
-    $data = $this->encode($val, $store_method);
-    if (false !== $ret = $this->storage->put($secret, $data, $compressed)) {
+    $finalKey = $this->encryptKey($name);
+    $data = $this->encode($val, $storeMethod);
+    if (false !== $success = $this->storage->store($finalKey, $data, $compressed)) {
       $expiry = ($expiry == 'never' ? 0 : $this->extractExpiryDate($expiry));
 
       if (!isset($this->info[$name])) {
@@ -237,12 +227,12 @@ class Cache {
           'expiry' => $expiry,
           'size' => strlen($data),
           'compressed' => $compressed,
-          'store_method' => $store_method,
+          'store_method' => $storeMethod,
       ));
       $this->info->increaseItem($name, 'write_count');
     }
 
-    return $ret;
+    return $success;
   }
 
   /**
@@ -269,36 +259,6 @@ class Cache {
   }
 
   /**
-   * Alias for storing a value in cache
-   * 	 
-   * @param string $name cache name
-   * @param mixed $val variable to be stored
-   * @param bool $compressed Compressed storage
-   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
-   * @param int $store_method Storing method (serialize|json)	 	 
-   *
-   * @return bool
-   */
-  public function set($name, $val, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->put($name, $val, $compressed, $expiry, $store_method);
-  }
-
-  /**
-   * Alias for storing a value in cache
-   * 	 
-   * @param string $name cache name
-   * @param mixed $val variable to be stored
-   * @param bool $compressed Compressed storage
-   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
-   * @param int $store_method Storing method (serialize|json)	 	 
-   *
-   * @return bool
-   */
-  public function store($name, $val, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->put($name, $val, $compressed, $expiry, $store_method);
-  }
-
-  /**
    * Retrieves the content of $name cache
    * 	 
    * @param string $name cache name
@@ -307,26 +267,26 @@ class Cache {
    * @return mixed
    */
   public function get($name, $default = null) {
-    if (!$this->isEnabled() || ($this->init() && $name != $this->info_key && !isset($this->info[$name]))) {
+    if (!$this->isEnabled() || ($this->init() && $name != $this->infoKey && !isset($this->info[$name]))) {
       $this->storage->miss();
       return $this->processDefault($default);
     }
 
-    list($compressed, $store_method) = $this->extractParameters($name);
-    $secret = $this->encryptKey($name);
-    $raw = $this->storage->get($secret, $compressed);
-    $ret = $this->decode($raw, $store_method);
+    list($compressed, $storeMethod) = $this->extractParameters($name);
+    $finalKey = $this->encryptKey($name);
+    $raw = $this->storage->get($finalKey, $compressed);
+    $success = $this->decode($raw, $storeMethod);
 
-    if ($ret !== null) {
+    if ($success !== null) {
       $this->info->touchItem($name, array('last_access', 'last_read'));
       $this->info->increaseItem($name, 'read_count');
-      $this->read_keys[] = $name;
-      array_unique($this->read_keys);
+      $this->readKeys[] = $name;
+      array_unique($this->readKeys);
     } else {
       $this->info->deleteData($name);
     }
 
-    return $ret;
+    return $success;
   }
 
   /**
@@ -337,9 +297,9 @@ class Cache {
    * @return array
    */
   protected function extractParameters($name) {
-    $compressed = ($name == $this->info_key ? true : $this->info->getItem($name, 'compressed'));
-    $store_method = ($name == $this->info_key ? self::STORE_METHOD_JSON : $this->info->getItem($name, 'store_method'));
-    return array($compressed, $store_method);
+    $compressed = ($name == $this->infoKey ? true : $this->info->getItem($name, 'compressed'));
+    $storeMethod = ($name == $this->infoKey ? self::STORE_METHOD_JSON : $this->info->getItem($name, 'store_method'));
+    return array($compressed, $storeMethod);
   }
 
   /**
@@ -349,16 +309,16 @@ class Cache {
    * @param mixed $default default value
    * @param bool $compressed Compressed storage
    * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
-   * @param int $store_method Storing method (serialize|json)	 	 
+   * @param int $storeMethod Storing method (serialize|json)	 	 
    * 
    * @return mixed
    */
-  public function getOrPut($name, $default, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    if ($this->exist($name)) {
+  public function getOrStore($name, $default, $compressed = false, $expiry = 0, $storeMethod = self::STORE_METHOD_SERIALIZE) {
+    if ($this->has($name)) {
       return $this->get($name);
     }
     $value = $this->processDefault($default);
-    $this->put($name, $value, $compressed, $expiry, $store_method);
+    $this->store($name, $value, $compressed, $expiry, $storeMethod);
     return $value;
   }
 
@@ -370,58 +330,36 @@ class Cache {
    * @return mixed
    */
   public function pull($name) {
-    $ret = $this->get($name);
+    $success = $this->get($name);
     $this->delete($name);
-    return $ret;
-  }
-
-  /**
-   * Alias for retrieving the content of $name cache
-   * 	 
-   * @param string $name cache name
-   * 	 
-   * @return mixed
-   */
-  public function retrieve($name) {
-    return $this->get($name);
-  }
-
-  /**
-   * Alias for retrieving the content of $name cache
-   * 	 
-   * @param string $name cache name
-   * 	 
-   * @return mixed
-   */
-  public function load($name) {
-    return $this->get($name);
+    return $success;
   }
 
   /**
    * Retrieves information of Cache state
    * 
-   * @param bool $get_fields
+   * @param bool $getFields
    * 	 
    * @return array|bool
    */
-  public function info($get_fields = false) {
+  public function info($getFields = false) {
     if (!$this->isEnabled()) {
       return false;
     }
     $this->init();
-    return $this->storage->info($get_fields);
+    return $this->storage->info($getFields);
   }
 
   /**
    * Encodes variable with the specified method
    * 
    * @param mixed $var Variable
-   * @param int $store_method serialize|json	 	 	 
+   * @param int $storeMethod serialize|json	 	 	 
    * 	 
    * @return mixed
    */
-  protected function encode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
-    switch ($store_method) {
+  protected function encode($var, $storeMethod = self::STORE_METHOD_SERIALIZE) {
+    switch ($storeMethod) {
       case self::STORE_METHOD_JSON:
         $var = json_encode($var);
         break;
@@ -436,16 +374,16 @@ class Cache {
    * Decodes variable with the specified method
    * 
    * @param mixed $var Variable
-   * @param int $store_method serialize|json	 	 	 
+   * @param int $storeMethod serialize|json	 	 	 
    * 	 
    * @return mixed
    */
-  protected function decode($var, $store_method = self::STORE_METHOD_SERIALIZE) {
+  protected function decode($var, $storeMethod = self::STORE_METHOD_SERIALIZE) {
     if (!$var) {
       return null;
     }
 
-    switch ($store_method) {
+    switch ($storeMethod) {
       case self::STORE_METHOD_JSON:
         $var = json_decode($var, true);
         break;
@@ -465,7 +403,7 @@ class Cache {
    * @return string
    */
   protected function encryptKey($key) {
-    return ($this->encrypt_keys ? sha1($key) : $key);
+    return ($this->encryptKeys ? sha1($key) : $key);
   }
 
   /**
@@ -501,35 +439,7 @@ class Cache {
     if (!$this->isEnabled() || $this->initialised < 1) {
       return false;
     }
-    return $this->put($this->info_key, $this->info->getData(), true, 0, self::STORE_METHOD_JSON);
-  }
-
-  /**
-   * Gets expiry information of a cached value (0: never)
-   * 
-   * @param string $name Cache name
-   * @param string $format Date format
-   * 	 
-   * @return string
-   */
-  public function getExpiry($name, $format = 'U') {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-    $this->init();
-    return $this->info->getExpiry($name, $format);
-  }
-
-  /**
-   * Calculates Time To Live
-   * 
-   * @param string $name
-   * 
-   * @return int
-   */
-  public function getTTL($name) {
-    $expiry = $this->getExpiry($name);
-    return ($expiry > 0 ? (int) $expiry - (int) $this->getCreated($name) : 0);
+    return $this->store($this->infoKey, $this->info->getData(), true, 0, self::STORE_METHOD_JSON);
   }
 
   /**
@@ -556,6 +466,239 @@ class Cache {
     if ($this->canModify($name)) {
       $this->info->setItem($name, 'expiry', $this->extractExpiryDate($expiry));
     }
+  }
+
+  /**
+   * Gets all cache key names
+   *  	 
+   * @return array
+   */
+  public function getKeys() {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+    $this->init();
+    return $this->info->getKeys();
+  }
+
+  /**
+   * Gets cache key names which already read
+   *  	 
+   * @return array
+   */
+  public function getReadKeys() {
+    return $this->readKeys;
+  }
+
+  /**
+   * Gets storage object
+   * 
+   * @return StorageInterface
+   */
+  public function getStorage() {
+    return $this->storage;
+  }
+
+  /**
+   * Retrieves key encryption
+   * 
+   * @return bool
+   */
+  public function getEncryptKeys() {
+    return $this->encryptKeys;
+  }
+
+  /**
+   * Sets key encryption
+   * 
+   * @param bool $encryptKeys
+   */
+  public function setEncryptKeys($encryptKeys) {
+    $this->encryptKeys = (bool) $encryptKeys;
+  }
+
+  /**
+   * Sets cache storage
+   * 
+   * @param StorageInterface $storage
+   */
+  public function setStorage(StorageInterface $storage) {
+    $this->storage = $storage;
+  }
+
+  /**
+   * Destructor
+   */
+  public function __destruct() {
+    $this->writeExpirals();
+  }
+
+  /**
+   * Sets a tagged cache value
+   * 	 
+   * @param string $name cache name
+   * @param mixed $val variable to be stored
+   * @param array $tags tags
+   * @param bool $compressed Compressed storage
+   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
+   * @param int $storeMethod Storing method (serialize|json)	 	 
+   *
+   * @return bool
+   */
+  public function storeTagged($name, $val, $tags, $compressed = false, $expiry = 0, $storeMethod = self::STORE_METHOD_SERIALIZE) {
+    if ($this->store($name, $val, $compressed, $expiry, $storeMethod)) {
+      $this->prepareTags($tags);
+      $this->info->setItem($name, 'tags', $tags);
+      return true;
+    }
+  }
+
+  /**
+   * Gets tagged cache values
+   * 
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function getTagged($tags) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $this->prepareTags($tags);
+    $filtered = (array) $this->info->filterByTags($tags);
+    $success = array();
+    foreach ($filtered as $key) {
+      $success[$key] = $this->get($key);
+    }
+    return $success;
+  }
+
+  /**
+   * Gets tags of a cached variable
+   * 
+   * @param string $key
+   * 
+   * @return array
+   */
+  public function getTags($key) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $success = $this->info->getItem($key, 'tags', 'array');
+    sort($success);
+    return $success;
+  }
+
+  /**
+   * Sets tags of a cached variable
+   * 
+   * @param string $name
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function setTags($name, $tags) {
+    if ($this->canModify($name)) {
+      $this->prepareTags($tags);
+      return $this->info->setItem($name, 'tags', $tags);
+    }
+    return false;
+  }
+
+  /**
+   * Adds tags for a cached variable
+   * 
+   * @param string $name
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function addTags($name, $tags) {
+    if ($this->canModify($name)) {
+      $this->prepareTags($tags);
+      $tags = array_unique(array_merge($this->getTags($name), $tags));
+      return $this->setTags($name, $tags);
+    }
+    return false;
+  }
+
+  /**
+   * Deletes cache values matching the given tags
+   * 
+   * @param array $tags
+   * 
+   * @return array
+   */
+  public function deleteTagged($tags) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $this->prepareTags($tags);
+    $filtered = (array) $this->info->filterByTags($tags);
+    return array_map(array($this, 'delete'), $filtered);
+  }
+
+  /**
+   * Gets all tags currently in use
+   * 
+   * @return array
+   */
+  public function getAllTags() {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+
+    $this->init();
+    $tags = array();
+    foreach ($this->info as $info) {
+      $tags = array_unique(array_merge($tags, $info['tags']));
+    }
+    sort($tags);
+    return $tags;
+  }
+
+  /**
+   * Prepares tags parameter
+   * 
+   * @param array|string $tags
+   */
+  protected function prepareTags(&$tags) {
+    if (!is_array($tags)) {
+      $tags = array($tags);
+    }
+    $tags = array_unique($tags);
+  }
+
+  /**
+   * Checks if cache value info can be modified (cache is enabled and value exists)
+   * 
+   * @param string $name
+   * 
+   * @return boolean
+   */
+  protected function canModify($name) {
+    if (!$this->isEnabled()) {
+      return false;
+    }
+    $this->init();
+    return $this->has($name);
+  }
+
+  /**
+   * Processes default value
+   * 
+   * @param \Closure|mixed $default
+   * 
+   * @return mixed
+   */
+  protected function processDefault($default) {
+    return ($default instanceof \Closure ? call_user_func($default) : $default);
   }
 
   /**
@@ -629,263 +772,31 @@ class Cache {
   }
 
   /**
-   * Gets all cache key names
-   *  	 
-   * @return array
-   */
-  public function getKeys() {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-    $this->init();
-    return $this->info->getKeys();
-  }
-
-  /**
-   * Gets cache key names which already read
-   *  	 
-   * @return array
-   */
-  public function getReadKeys() {
-    return $this->read_keys;
-  }
-
-  /**
-   * Gets storage object
+   * Gets expiry information of a cached value (0: never)
    * 
-   * @return StorageInterface
-   */
-  public function getStorage() {
-    return $this->storage;
-  }
-
-  /**
-   * Retrieves key encryption
-   * 
-   * @return bool
-   */
-  public function getEncryptKeys() {
-    return $this->encrypt_keys;
-  }
-
-  /**
-   * Sets key encryption
-   * 
-   * @param bool $encrypt_keys
-   */
-  public function setEncryptKeys($encrypt_keys) {
-    $this->encrypt_keys = (bool) $encrypt_keys;
-  }
-
-  /**
-   * Sets cache storage
-   * 
-   * @param StorageInterface $storage
-   */
-  public function setStorage(StorageInterface $storage) {
-    $this->storage = $storage;
-  }
-
-  /**
-   * Destructor
-   */
-  public function __destruct() {
-    $this->writeExpirals();
-  }
-
-  /**
-   * Sets a tagged cache value
+   * @param string $name Cache name
+   * @param string $format Date format
    * 	 
-   * @param string $name cache name
-   * @param mixed $val variable to be stored
-   * @param array $tags tags
-   * @param bool $compressed Compressed storage
-   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
-   * @param int $store_method Storing method (serialize|json)	 	 
-   *
-   * @return bool
+   * @return string
    */
-  public function putTagged($name, $val, $tags, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    if ($this->put($name, $val, $compressed, $expiry, $store_method)) {
-      $this->prepareTags($tags);
-      $this->info->setItem($name, 'tags', $tags);
-      return true;
-    }
-  }
-
-  /**
-   * Alias of putTagged
-   * 	 
-   * @param string $name cache name
-   * @param mixed $val variable to be stored
-   * @param array $tags tags
-   * @param bool $compressed Compressed storage
-   * @param int|string $expiry Expires in the given seconds	(0:never) or the time defined by valid date string (eg. '2014-10-01' or '1week' or '2hours')
-   * @param int $store_method Storing method (serialize|json)	 	 
-   *
-   * @return bool
-   */
-  public function setTagged($name, $val, $tags, $compressed = false, $expiry = 0, $store_method = self::STORE_METHOD_SERIALIZE) {
-    return $this->putTagged($name, $val, $tags, $compressed, $expiry, $store_method);
-  }
-
-  /**
-   * Gets tagged cache values
-   * 
-   * @param array $tags
-   * 
-   * @return array
-   */
-  public function getTagged($tags) {
+  public function getExpiry($name, $format = 'U') {
     if (!$this->isEnabled()) {
       return false;
     }
-
     $this->init();
-    $this->prepareTags($tags);
-    $filtered = (array) $this->info->filterByTags($tags);
-    $ret = array();
-    foreach ($filtered as $key) {
-      $ret[$key] = $this->get($key);
-    }
-    return $ret;
+    return $this->info->getExpiry($name, $format);
   }
 
   /**
-   * Gets tags of a cached variable
-   * 
-   * @param string $key
-   * 
-   * @return array
-   */
-  public function getTags($key) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-
-    $this->init();
-    $ret = $this->info->getItem($key, 'tags', 'array');
-    sort($ret);
-    return $ret;
-  }
-
-  /**
-   * Sets tags of a cached variable
-   * 
-   * @param string $name
-   * @param array $tags
-   * 
-   * @return array
-   */
-  public function setTags($name, $tags) {
-    if ($this->canModify($name)) {
-      $this->prepareTags($tags);
-      return $this->info->setItem($name, 'tags', $tags);
-    }
-    return false;
-  }
-
-  /**
-   * Adds tags for a cached variable
-   * 
-   * @param string $name
-   * @param array $tags
-   * 
-   * @return array
-   */
-  public function addTags($name, $tags) {
-    if ($this->canModify($name)) {
-      $this->prepareTags($tags);
-      $tags = array_unique(array_merge($this->getTags($name), $tags));
-      return $this->setTags($name, $tags);
-    }
-    return false;
-  }
-
-  /**
-   * Clears cache values matching the given tags
-   * 
-   * @param array $tags
-   * 
-   * @return array
-   */
-  public function clearTagged($tags) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-
-    $this->init();
-    $this->prepareTags($tags);
-    $filtered = (array) $this->info->filterByTags($tags);
-    return array_map(array($this, 'clear'), $filtered);
-  }
-
-  /**
-   * Alias of clearTagged
-   * 
-   * @param array $tags
-   * 
-   * @return array
-   */
-  public function deleteTagged($tags) {
-    return $this->clearTagged($tags);
-  }
-
-  /**
-   * Gets all tags currently in use
-   * 
-   * @return array
-   */
-  public function getAllTags() {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-
-    $this->init();
-    $tags = array();
-    foreach ($this->info as $info) {
-      $tags = array_unique(array_merge($tags, $info['tags']));
-    }
-    sort($tags);
-    return $tags;
-  }
-
-  /**
-   * Prepares tags parameter
-   * 
-   * @param array|string $tags
-   */
-  protected function prepareTags(&$tags) {
-    if (!is_array($tags)) {
-      $tags = array($tags);
-    }
-    $tags = array_unique($tags);
-  }
-
-  /**
-   * Checks if cache value info can be modified (cache is enabled and value exists)
+   * Calculates Time To Live
    * 
    * @param string $name
    * 
-   * @return boolean
+   * @return int
    */
-  protected function canModify($name) {
-    if (!$this->isEnabled()) {
-      return false;
-    }
-    $this->init();
-    return $this->exist($name);
-  }
-
-  /**
-   * Processes default value
-   * 
-   * @param \Closure|mixed $default
-   * 
-   * @return mixed
-   */
-  protected function processDefault($default) {
-    return ($default instanceof \Closure ? call_user_func($default) : $default);
+  public function getTTL($name) {
+    $expiry = $this->getExpiry($name);
+    return ($expiry > 0 ? (int) $expiry - (int) $this->getCreated($name) : 0);
   }
 
 }
