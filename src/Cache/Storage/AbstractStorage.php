@@ -57,15 +57,15 @@ abstract class AbstractStorage {
    * @return mixed
    */
   public function get($name, $compressed = false) {
-    $ret = $this->provider->get($this->prefix . $name);
-    if ($ret !== false) {
+    $value = $this->provider->get($this->prefix . $name);
+    if ($value !== false) {
       $this->hit();
       $this->storeName($name);
     } else {
       $this->miss();
     }
 
-    return $ret;
+    return $value;
   }
 
   /**
