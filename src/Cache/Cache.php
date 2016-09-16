@@ -158,8 +158,8 @@ class Cache {
     }
 
     $this->init();
-    $finalKey = $this->encryptKey($name);
-    return ($this->storage->has($finalKey) && ($name == $this->infoKey || isset($this->info[$name])));
+    $realKey = $this->encryptKey($name);
+    return ($this->storage->has($realKey) && ($name == $this->infoKey || isset($this->info[$name])));
   }
 
   /**
@@ -175,8 +175,8 @@ class Cache {
     }
 
     $this->init();
-    $finalKey = ($name != '' ? $this->encryptKey($name) : $name);
-    $success = $this->storage->delete($finalKey);
+    $realKey = $this->encryptKey($name);
+    $success = $this->storage->delete($realKey);
 
     if ($name == '') {
       $this->info->setData(array());
@@ -213,10 +213,10 @@ class Cache {
     }
 
     $this->init();
-    $finalKey = $this->encryptKey($name);
+    $realKey = $this->encryptKey($name);
     $data = $this->encode($val, $storeMethod);
-    if (false !== $success = $this->storage->store($finalKey, $data, $compressed)) {
-      $expiry = ($expiry == 'never' ? 0 : $this->extractExpiryDate($expiry));
+    if (false !== $success = $this->storage->store($realKey, $data, $compressed)) {
+      $expiry = $this->extractExpiryDate($expiry);
 
       if (!isset($this->info[$name])) {
         $this->info->createData($name);
@@ -244,18 +244,19 @@ class Cache {
    */
   protected function extractExpiryDate($expiry) {
     if (is_string($expiry)) {
+      if ($expiry == 'never') {
+        return 0;
+      }
       if (strtotime($expiry) === false) {
         throw new \InvalidArgumentException('Invalid date format!');
       }
       $date = new \DateTime($expiry);
-      $expiry = $date->format('U') < time() ? 0 : $date->format('U');
+      return $date->format('U') < time() ? 0 : $date->format('U');
     } elseif ((int) $expiry > 0) {
-      $expiry = ($expiry < time() ? time() + $expiry : $expiry);
-    } else {
-      $expiry = 0;
+      return ($expiry < time() ? time() + $expiry : $expiry);
     }
 
-    return $expiry;
+    return 0;
   }
 
   /**
@@ -273,8 +274,8 @@ class Cache {
     }
 
     list($compressed, $storeMethod) = $this->extractParameters($name);
-    $finalKey = $this->encryptKey($name);
-    $raw = $this->storage->get($finalKey, $compressed);
+    $realKey = $this->encryptKey($name);
+    $raw = $this->storage->get($realKey, $compressed);
     $success = $this->decode($raw, $storeMethod);
 
     if ($success !== null) {
@@ -403,7 +404,7 @@ class Cache {
    * @return string
    */
   protected function encryptKey($key) {
-    return ($this->encryptKeys ? sha1($key) : $key);
+    return ($this->encryptKeys && $key != '' ? sha1($key) : $key);
   }
 
   /**
