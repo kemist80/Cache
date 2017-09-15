@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.2.1
+ * @version 1.2.2
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class Cache {
@@ -90,11 +90,10 @@ class Cache {
     $this->initialised = 0;
     $this->storage->init();
 
-    if ($this->has($this->infoKey)) {
-      $this->temp = (array) $this->getOrStore($this->infoKey, array());
-      array_walk($this->temp, array($this, 'handleExpiration'));
-      $this->info->setData($this->temp);
-    }
+    $this->temp = (array) $this->getOrStore($this->infoKey, array());
+    array_walk($this->temp, array($this, 'handleExpiration'));
+    $this->info->setData($this->temp);
+    
     $this->initialised = 1;
     return true;
   }
@@ -110,7 +109,7 @@ class Cache {
   protected function handleExpiration($data, $key) {
     if (!isset($data['expiry']) || $data['expiry'] == 0) {
       return true;
-    } elseif (!$this->has($key)) {
+    } elseif (!$this->storage->has($key)) {
       unset($this->temp[$key]);
     } elseif (time() > (int)$data['expiry']) {
       $this->delete($key);
@@ -259,7 +258,7 @@ class Cache {
       $date = new \DateTime($expiry);
       return $date->format('U') < time() ? 0 : $date->format('U');
     } elseif ((int) $expiry > 0) {
-      return ((int)$expiry < time() ? time() + (int) $expiry : (int)$expiry);
+      return ($expiry < time() ? time() + $expiry : $expiry);
     }
 
     return 0;
