@@ -112,7 +112,7 @@ class Cache {
       return true;
     } elseif (!$this->has($key)) {
       unset($this->temp[$key]);
-    } elseif (time() > $data['expiry']) {
+    } elseif (time() > (int)$data['expiry']) {
       $this->delete($key);
     }
   }
@@ -259,7 +259,7 @@ class Cache {
       $date = new \DateTime($expiry);
       return $date->format('U') < time() ? 0 : $date->format('U');
     } elseif ((int) $expiry > 0) {
-      return ($expiry < time() ? time() + $expiry : $expiry);
+      return ((int)$expiry < time() ? time() + (int) $expiry : (int)$expiry);
     }
 
     return 0;
