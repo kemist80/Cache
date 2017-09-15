@@ -9,7 +9,7 @@ use Kemist\Cache\Storage\StorageInterface;
  * 
  * @package Kemist\Cache
  * 
- * @version 1.2.0
+ * @version 1.2.1
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class Cache {
@@ -37,6 +37,12 @@ class Cache {
    * @var Info
    */
   protected $info;
+  
+  /**
+   * Temp info storage
+   * @var array 
+   */
+  protected $temp;
 
   /**
    * Read key names
@@ -85,9 +91,9 @@ class Cache {
     $this->storage->init();
 
     if ($this->has($this->infoKey)) {
-      $info = (array) $this->getOrStore($this->infoKey, array());
-      array_walk($info, array($this, 'handleExpiration'));
-      $this->info->setData($info);
+      $this->temp = (array) $this->getOrStore($this->infoKey, array());
+      array_walk($this->temp, array($this, 'handleExpiration'));
+      $this->info->setData($this->temp);
     }
     $this->initialised = 1;
     return true;
@@ -105,7 +111,7 @@ class Cache {
     if (!isset($data['expiry']) || $data['expiry'] == 0) {
       return true;
     } elseif (!$this->has($key)) {
-      unset($this->info[$key]);
+      unset($this->temp[$key]);
     } elseif (time() > $data['expiry']) {
       $this->delete($key);
     }
